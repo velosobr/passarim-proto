@@ -1,0 +1,34 @@
+# CI do passarim-proto: roda em todo push e pull request.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  proto:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # histórico completo para o buf breaking comparar com a main
+      - uses: bufbuild/buf-action@v1
+        with:
+          # lint sempre; breaking só em PR (compara com a main).
+          lint: true
+          format: true
+          breaking: ${{ github.event_name == 'pull_request' }}
+          breaking_against: ${{ github.event.repository.clone_url }}#branch=main
+          push: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      # Garante que o código gerado commitado está atualizado com os .proto.
+      - name: generated code is up to date
+        run: |
+          go install github.com/bufbuild/buf/cmd/buf@latest
+          buf generate
+          git diff --exit-code gen/
+      - run: go test ./...
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...

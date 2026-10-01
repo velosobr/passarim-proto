@@ -54,9 +54,9 @@ enum ConservationStatus {
 // Crédito de autoria. As licenças Creative Commons exigem mostrar
 // quem fez a foto/gravação/texto e sob qual licença.
 message Credit {
-  string author = 1;     // nome do autor
-  string license = 2;    // código da licença, ex.: "CC-BY-NC"
-  string source = 3;     // de onde veio: "inaturalist", "xeno-canto", "wikipedia", "curated"
+  string author = 1; // nome do autor
+  string license = 2; // código da licença, ex.: "CC-BY-NC"
+  string source = 3; // de onde veio: "inaturalist", "xeno-canto", "wikipedia", "curated"
   string source_url = 4; // link para o original
 }
 
@@ -64,10 +64,10 @@ message Credit {
 // (ex.: "species/abc/p1-thumb.webp"), não URLs: quem monta a URL
 // final da CDN é o BFF. Assim trocar de CDN não exige mudar o banco.
 message Photo {
-  string thumb_key = 1;  // miniatura para os cards
+  string thumb_key = 1; // miniatura para os cards
   string medium_key = 2; // galeria
-  string large_key = 3;  // foto principal (hero)
-  int32 width = 4;       // dimensões do tamanho "large", em pixels
+  string large_key = 3; // foto principal (hero)
+  int32 width = 4; // dimensões do tamanho "large", em pixels
   int32 height = 5;
   Credit credit = 6;
 }
@@ -117,17 +117,17 @@ message Species {
   repeated Fact facts = 10;
   repeated Biome biomes = 11;
   repeated string states = 12; // siglas das UFs, ex.: "MS"
-  repeated Photo photos = 13;  // a primeira é a principal
+  repeated Photo photos = 13; // a primeira é a principal
   // Mensagens já podem ser nulas: ave sem canto => audio ausente.
   Audio audio = 14;
   repeated OccurrenceCluster clusters = 15;
 }
 
 message ListSpeciesRequest {
-  string query = 1;     // busca por nome popular ou científico (vazio = todas)
-  Biome biome = 2;      // UNSPECIFIED = sem filtro
-  string state = 3;     // UF; vazio = sem filtro
-  int32 page_size = 4;  // o servidor limita a 50
+  string query = 1; // busca por nome popular ou científico (vazio = todas)
+  Biome biome = 2; // UNSPECIFIED = sem filtro
+  string state = 3; // UF; vazio = sem filtro
+  int32 page_size = 4; // o servidor limita a 50
   string page_token = 5; // cursor opaco devolvido na página anterior
 }
 
