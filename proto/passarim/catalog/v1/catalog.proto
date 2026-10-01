@@ -1,0 +1,162 @@
+// catalog.proto — o "contrato" entre o BFF e a Catalog API.
+//
+// Um contrato gRPC descreve, de forma independente de linguagem,
+// quais funções um serviço oferece (rpc) e o formato exato dos dados
+// (message). A partir deste arquivo o Buf gera o código Go do cliente
+// (usado pelo BFF) e do servidor (implementado pelo catalog).
+//
+// Regras de ouro para evoluir este arquivo sem quebrar ninguém:
+//   - nunca reutilize o NÚMERO de um campo removido (use "reserved");
+//   - nunca mude o tipo de um campo existente;
+//   - campos novos são sempre seguros.
+// O CI roda "buf breaking" para garantir isso automaticamente.
+syntax = "proto3";
+
+// O ".v1" no pacote permite criar um v2 no futuro sem derrubar o v1.
+package passarim.catalog.v1;
+
+// CatalogService é servido pelo passarim-catalog e consumido pelo passarim-bff.
+service CatalogService {
+  // Lista resumida de espécies, com busca, filtros e paginação.
+  rpc ListSpecies(ListSpeciesRequest) returns (ListSpeciesResponse);
+  // Todos os dados de uma espécie, para a tela de detalhe.
+  rpc GetSpecies(GetSpeciesRequest) returns (GetSpeciesResponse);
+  // Biomas e estados disponíveis, com quantas espécies há em cada um.
+  rpc ListFilters(ListFiltersRequest) returns (ListFiltersResponse);
+}
+
+// Os seis biomas brasileiros. O valor 0 (UNSPECIFIED) é obrigatório em
+// proto3 e significa "não informado" — nunca é um bioma de verdade.
+enum Biome {
+  BIOME_UNSPECIFIED = 0;
+  BIOME_AMAZONIA = 1;
+  BIOME_MATA_ATLANTICA = 2;
+  BIOME_CERRADO = 3;
+  BIOME_CAATINGA = 4;
+  BIOME_PANTANAL = 5;
+  BIOME_PAMPA = 6;
+}
+
+// Categorias da Lista Vermelha da IUCN (União Internacional para a
+// Conservação da Natureza), do menos ao mais ameaçado.
+enum ConservationStatus {
+  CONSERVATION_STATUS_UNSPECIFIED = 0;
+  CONSERVATION_STATUS_LC = 1; // Pouco preocupante
+  CONSERVATION_STATUS_NT = 2; // Quase ameaçada
+  CONSERVATION_STATUS_VU = 3; // Vulnerável
+  CONSERVATION_STATUS_EN = 4; // Em perigo
+  CONSERVATION_STATUS_CR = 5; // Criticamente em perigo
+  CONSERVATION_STATUS_EW = 6; // Extinta na natureza
+  CONSERVATION_STATUS_EX = 7; // Extinta
+  CONSERVATION_STATUS_DD = 8; // Dados insuficientes
+}
+
+// Crédito de autoria. As licenças Creative Commons exigem mostrar
+// quem fez a foto/gravação/texto e sob qual licença.
+message Credit {
+  string author = 1;     // nome do autor
+  string license = 2;    // código da licença, ex.: "CC-BY-NC"
+  string source = 3;     // de onde veio: "inaturalist", "xeno-canto", "wikipedia", "curated"
+  string source_url = 4; // link para o original
+}
+
+// Uma foto em três tamanhos. Guardamos CHAVES do object storage
+// (ex.: "species/abc/p1-thumb.webp"), não URLs: quem monta a URL
+// final da CDN é o BFF. Assim trocar de CDN não exige mudar o banco.
+message Photo {
+  string thumb_key = 1;  // miniatura para os cards
+  string medium_key = 2; // galeria
+  string large_key = 3;  // foto principal (hero)
+  int32 width = 4;       // dimensões do tamanho "large", em pixels
+  int32 height = 5;
+  Credit credit = 6;
+}
+
+// Gravação do canto, já convertida para AAC.
+message Audio {
+  string key = 1;
+  int32 duration_ms = 2;
+  Credit credit = 3;
+}
+
+// Uma curiosidade sobre a espécie.
+message Fact {
+  string text = 1;
+  string source = 2;
+}
+
+// Pontos de avistamento já agrupados ("clusters") para o mapa ficar leve:
+// em vez de milhares de pontos, mandamos poucos pontos com uma contagem.
+message OccurrenceCluster {
+  double lat = 1;
+  double lng = 2;
+  int32 count = 3;
+}
+
+// Versão resumida, usada nos cards da lista.
+message SpeciesSummary {
+  string id = 1;
+  string scientific_name = 2;
+  string common_name_pt = 3;
+  string thumbnail_key = 4;
+  ConservationStatus conservation_status = 5;
+}
+
+// Versão completa, usada na tela de detalhe.
+message Species {
+  string id = 1;
+  string scientific_name = 2;
+  string common_name_pt = 3;
+  string family = 4;
+  // "optional" permite distinguir "não sabemos" de "zero".
+  optional int32 size_cm = 5;
+  optional string diet = 6;
+  ConservationStatus conservation_status = 7;
+  string description = 8;
+  Credit description_credit = 9;
+  repeated Fact facts = 10;
+  repeated Biome biomes = 11;
+  repeated string states = 12; // siglas das UFs, ex.: "MS"
+  repeated Photo photos = 13;  // a primeira é a principal
+  // Mensagens já podem ser nulas: ave sem canto => audio ausente.
+  Audio audio = 14;
+  repeated OccurrenceCluster clusters = 15;
+}
+
+message ListSpeciesRequest {
+  string query = 1;     // busca por nome popular ou científico (vazio = todas)
+  Biome biome = 2;      // UNSPECIFIED = sem filtro
+  string state = 3;     // UF; vazio = sem filtro
+  int32 page_size = 4;  // o servidor limita a 50
+  string page_token = 5; // cursor opaco devolvido na página anterior
+}
+
+message ListSpeciesResponse {
+  repeated SpeciesSummary species = 1;
+  string next_page_token = 2; // vazio = não há mais páginas
+}
+
+message GetSpeciesRequest {
+  string id = 1;
+}
+
+message GetSpeciesResponse {
+  Species species = 1;
+}
+
+message ListFiltersRequest {}
+
+message BiomeCount {
+  Biome biome = 1;
+  int32 species_count = 2;
+}
+
+message StateCount {
+  string state = 1;
+  int32 species_count = 2;
+}
+
+message ListFiltersResponse {
+  repeated BiomeCount biomes = 1;
+  repeated StateCount states = 2;
+}
