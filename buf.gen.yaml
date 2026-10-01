@@ -1,0 +1,18 @@
+# buf.gen.yaml — quais "plugins" transformam .proto em código.
+version: v2
+managed:
+  enabled: true
+  override:
+    # Diz ao gerador qual é o caminho de import Go dos pacotes gerados,
+    # assim não precisamos repetir "option go_package" em cada .proto.
+    - file_option: go_package_prefix
+      value: github.com/velosobr/passarim-proto/gen/go
+plugins:
+  # Gera as structs Go das mensagens (Species, ListSpeciesRequest, ...).
+  - remote: buf.build/protocolbuffers/go
+    out: gen/go
+    opt: paths=source_relative
+  # Gera o cliente e o servidor gRPC (CatalogServiceClient/Server).
+  - remote: buf.build/grpc/go
+    out: gen/go
+    opt: paths=source_relative

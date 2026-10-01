@@ -1,0 +1,19 @@
+# buf.yaml — configuração do Buf, a ferramenta que organiza nossos .proto.
+# O Buf faz três coisas por nós:
+#   1. lint: garante que os .proto seguem boas práticas de nomes e estrutura;
+#   2. breaking: impede mudanças que quebrariam quem já usa o contrato;
+#   3. generate: gera o código Go a partir dos .proto (ver buf.gen.yaml).
+version: v2
+modules:
+  # Todos os .proto ficam dentro de proto/. O caminho do pacote
+  # (passarim/catalog/v1) precisa bater com a pasta.
+  - path: proto
+lint:
+  use:
+    # STANDARD é o conjunto de regras recomendado pelo Buf
+    # (ex.: enums com valor zero *_UNSPECIFIED, pacotes versionados com v1).
+    - STANDARD
+breaking:
+  use:
+    # FILE é a regra mais rígida: protege até contra mover mensagens de arquivo.
+    - FILE
