@@ -21,6 +21,9 @@ package passarim.catalog.v1;
 //   - INVALID_ARGUMENT: parâmetro inválido (bioma/UF desconhecido, page_token
 //     corrompido, query com mais de 100 caracteres, page_size negativo).
 //   - NOT_FOUND: (só GetSpecies) não existe espécie com esse id.
+//   - DEADLINE_EXCEEDED / CANCELLED: o contexto da chamada expirou (ex.:
+//     timeout de 2s do BFF) ou foi cancelado pelo cliente; não é uma falha
+//     do catalog.
 //   - INTERNAL: falha inesperada; a mensagem NÃO traz detalhes internos.
 service CatalogService {
   // Lista resumida de espécies, com busca, filtros e paginação.
