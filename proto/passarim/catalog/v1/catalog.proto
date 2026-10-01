@@ -16,12 +16,18 @@ syntax = "proto3";
 package passarim.catalog.v1;
 
 // CatalogService é servido pelo passarim-catalog e consumido pelo passarim-bff.
+//
+// Erros (códigos gRPC) que todos os métodos podem devolver:
+//   - INVALID_ARGUMENT: parâmetro inválido (bioma/UF desconhecido, page_token
+//     corrompido, query com mais de 100 caracteres, page_size negativo).
+//   - NOT_FOUND: (só GetSpecies) não existe espécie com esse id.
+//   - INTERNAL: falha inesperada; a mensagem NÃO traz detalhes internos.
 service CatalogService {
   // Lista resumida de espécies, com busca, filtros e paginação.
   rpc ListSpecies(ListSpeciesRequest) returns (ListSpeciesResponse);
   // Todos os dados de uma espécie, para a tela de detalhe.
   rpc GetSpecies(GetSpeciesRequest) returns (GetSpeciesResponse);
-  // Biomas e estados disponíveis, com quantas espécies há em cada um.
+  // Biomas e estados que têm ao menos uma espécie, com a contagem.
   rpc ListFilters(ListFiltersRequest) returns (ListFiltersResponse);
 }
 
@@ -91,6 +97,9 @@ message OccurrenceCluster {
   double lat = 1;
   double lng = 2;
   int32 count = 3;
+  // Tamanho do agrupamento em graus (lado do quadrado usado para agrupar).
+  // O app usa para escolher o raio do círculo no mapa.
+  double precision = 4;
 }
 
 // Versão resumida, usada nos cards da lista.
@@ -127,7 +136,8 @@ message ListSpeciesRequest {
   string query = 1; // busca por nome popular ou científico (vazio = todas)
   Biome biome = 2; // UNSPECIFIED = sem filtro
   string state = 3; // UF; vazio = sem filtro
-  int32 page_size = 4; // o servidor limita a 50
+  // Quantos itens por página. 0 = padrão (20). Acima de 50 = 50. Negativo = erro.
+  int32 page_size = 4;
   string page_token = 5; // cursor opaco devolvido na página anterior
 }
 

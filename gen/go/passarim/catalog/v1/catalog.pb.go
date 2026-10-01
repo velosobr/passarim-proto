@@ -442,10 +442,13 @@ func (x *Fact) GetSource() string {
 // Pontos de avistamento já agrupados ("clusters") para o mapa ficar leve:
 // em vez de milhares de pontos, mandamos poucos pontos com uma contagem.
 type OccurrenceCluster struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Lat           float64                `protobuf:"fixed64,1,opt,name=lat,proto3" json:"lat,omitempty"`
-	Lng           float64                `protobuf:"fixed64,2,opt,name=lng,proto3" json:"lng,omitempty"`
-	Count         int32                  `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Lat   float64                `protobuf:"fixed64,1,opt,name=lat,proto3" json:"lat,omitempty"`
+	Lng   float64                `protobuf:"fixed64,2,opt,name=lng,proto3" json:"lng,omitempty"`
+	Count int32                  `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
+	// Tamanho do agrupamento em graus (lado do quadrado usado para agrupar).
+	// O app usa para escolher o raio do círculo no mapa.
+	Precision     float64 `protobuf:"fixed64,4,opt,name=precision,proto3" json:"precision,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -497,6 +500,13 @@ func (x *OccurrenceCluster) GetLng() float64 {
 func (x *OccurrenceCluster) GetCount() int32 {
 	if x != nil {
 		return x.Count
+	}
+	return 0
+}
+
+func (x *OccurrenceCluster) GetPrecision() float64 {
+	if x != nil {
+		return x.Precision
 	}
 	return 0
 }
@@ -738,12 +748,13 @@ func (x *Species) GetClusters() []*OccurrenceCluster {
 }
 
 type ListSpeciesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`                                 // busca por nome popular ou científico (vazio = todas)
-	Biome         Biome                  `protobuf:"varint,2,opt,name=biome,proto3,enum=passarim.catalog.v1.Biome" json:"biome,omitempty"` // UNSPECIFIED = sem filtro
-	State         string                 `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"`                                 // UF; vazio = sem filtro
-	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`          // o servidor limita a 50
-	PageToken     string                 `protobuf:"bytes,5,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`        // cursor opaco devolvido na página anterior
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Query string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`                                 // busca por nome popular ou científico (vazio = todas)
+	Biome Biome                  `protobuf:"varint,2,opt,name=biome,proto3,enum=passarim.catalog.v1.Biome" json:"biome,omitempty"` // UNSPECIFIED = sem filtro
+	State string                 `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"`                                 // UF; vazio = sem filtro
+	// Quantos itens por página. 0 = padrão (20). Acima de 50 = 50. Negativo = erro.
+	PageSize      int32  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string `protobuf:"bytes,5,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"` // cursor opaco devolvido na página anterior
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1171,11 +1182,12 @@ const file_passarim_catalog_v1_catalog_proto_rawDesc = "" +
 	"\x06credit\x18\x03 \x01(\v2\x1b.passarim.catalog.v1.CreditR\x06credit\"2\n" +
 	"\x04Fact\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12\x16\n" +
-	"\x06source\x18\x02 \x01(\tR\x06source\"M\n" +
+	"\x06source\x18\x02 \x01(\tR\x06source\"k\n" +
 	"\x11OccurrenceCluster\x12\x10\n" +
 	"\x03lat\x18\x01 \x01(\x01R\x03lat\x12\x10\n" +
 	"\x03lng\x18\x02 \x01(\x01R\x03lng\x12\x14\n" +
-	"\x05count\x18\x03 \x01(\x05R\x05count\"\xee\x01\n" +
+	"\x05count\x18\x03 \x01(\x05R\x05count\x12\x1c\n" +
+	"\tprecision\x18\x04 \x01(\x01R\tprecision\"\xee\x01\n" +
 	"\x0eSpeciesSummary\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12'\n" +
 	"\x0fscientific_name\x18\x02 \x01(\tR\x0escientificName\x12$\n" +

@@ -110,3 +110,16 @@ func TestCatalogServiceMethods(t *testing.T) {
 		}
 	}
 }
+
+// O mapa usa a precisão (em graus) para desenhar o raio de cada cluster.
+func TestOccurrenceClusterHasPrecision(t *testing.T) {
+	c := &catalogv1.OccurrenceCluster{Lat: -19, Lng: -57, Count: 3, Precision: 0.5}
+	bytes, _ := proto.Marshal(c)
+	decoded := &catalogv1.OccurrenceCluster{}
+	if err := proto.Unmarshal(bytes, decoded); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if decoded.GetPrecision() != 0.5 {
+		t.Fatalf("precision = %v, want 0.5", decoded.GetPrecision())
+	}
+}

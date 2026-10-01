@@ -44,12 +44,18 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // CatalogService é servido pelo passarim-catalog e consumido pelo passarim-bff.
+//
+// Erros (códigos gRPC) que todos os métodos podem devolver:
+//   - INVALID_ARGUMENT: parâmetro inválido (bioma/UF desconhecido, page_token
+//     corrompido, query com mais de 100 caracteres, page_size negativo).
+//   - NOT_FOUND: (só GetSpecies) não existe espécie com esse id.
+//   - INTERNAL: falha inesperada; a mensagem NÃO traz detalhes internos.
 type CatalogServiceClient interface {
 	// Lista resumida de espécies, com busca, filtros e paginação.
 	ListSpecies(ctx context.Context, in *ListSpeciesRequest, opts ...grpc.CallOption) (*ListSpeciesResponse, error)
 	// Todos os dados de uma espécie, para a tela de detalhe.
 	GetSpecies(ctx context.Context, in *GetSpeciesRequest, opts ...grpc.CallOption) (*GetSpeciesResponse, error)
-	// Biomas e estados disponíveis, com quantas espécies há em cada um.
+	// Biomas e estados que têm ao menos uma espécie, com a contagem.
 	ListFilters(ctx context.Context, in *ListFiltersRequest, opts ...grpc.CallOption) (*ListFiltersResponse, error)
 }
 
@@ -96,12 +102,18 @@ func (c *catalogServiceClient) ListFilters(ctx context.Context, in *ListFiltersR
 // for forward compatibility.
 //
 // CatalogService é servido pelo passarim-catalog e consumido pelo passarim-bff.
+//
+// Erros (códigos gRPC) que todos os métodos podem devolver:
+//   - INVALID_ARGUMENT: parâmetro inválido (bioma/UF desconhecido, page_token
+//     corrompido, query com mais de 100 caracteres, page_size negativo).
+//   - NOT_FOUND: (só GetSpecies) não existe espécie com esse id.
+//   - INTERNAL: falha inesperada; a mensagem NÃO traz detalhes internos.
 type CatalogServiceServer interface {
 	// Lista resumida de espécies, com busca, filtros e paginação.
 	ListSpecies(context.Context, *ListSpeciesRequest) (*ListSpeciesResponse, error)
 	// Todos os dados de uma espécie, para a tela de detalhe.
 	GetSpecies(context.Context, *GetSpeciesRequest) (*GetSpeciesResponse, error)
-	// Biomas e estados disponíveis, com quantas espécies há em cada um.
+	// Biomas e estados que têm ao menos uma espécie, com a contagem.
 	ListFilters(context.Context, *ListFiltersRequest) (*ListFiltersResponse, error)
 	mustEmbedUnimplementedCatalogServiceServer()
 }
