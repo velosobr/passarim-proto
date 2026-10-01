@@ -14,11 +14,15 @@ jobs:
           fetch-depth: 0 # histórico completo para o buf breaking comparar com a main
       - uses: bufbuild/buf-action@v1
         with:
-          # lint sempre; breaking só em PR (compara com a main).
+          version: 1.73.0 # mesma versão usada localmente (reprodutível)
           lint: true
           format: true
-          breaking: ${{ github.event_name == 'pull_request' }}
-          breaking_against: ${{ github.event.repository.clone_url }}#branch=main
+          # breaking roda SEMPRE:
+          #  - em PR, compara com a main;
+          #  - em push direto na main, compara com o commit anterior ao push.
+          # Assim nenhuma mudança incompatível entra sem ser detectada.
+          breaking: true
+          breaking_against: ${{ github.event_name == 'pull_request' && format('{0}#branch=main', github.event.repository.clone_url) || format('{0}#ref={1}', github.event.repository.clone_url, github.event.before) }}
           push: false
       - uses: actions/setup-go@v5
         with:
@@ -26,7 +30,7 @@ jobs:
       # Garante que o código gerado commitado está atualizado com os .proto.
       - name: generated code is up to date
         run: |
-          go install github.com/bufbuild/buf/cmd/buf@latest
+          go install github.com/bufbuild/buf/cmd/buf@v1.73.0
           buf generate
           git diff --exit-code gen/
       - run: go test ./...

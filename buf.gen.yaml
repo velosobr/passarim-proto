@@ -8,11 +8,14 @@ managed:
     - file_option: go_package_prefix
       value: github.com/velosobr/passarim-proto/gen/go
 plugins:
+  # Versões FIXAS: o código gerado registra a versão do plugin no cabeçalho.
+  # Sem fixar, um lançamento novo do plugin mudaria o código gerado sozinho
+  # e o CI ("generated code is up to date") ficaria vermelho sem motivo.
   # Gera as structs Go das mensagens (Species, ListSpeciesRequest, ...).
-  - remote: buf.build/protocolbuffers/go
+  - remote: buf.build/protocolbuffers/go:v1.36.12
     out: gen/go
     opt: paths=source_relative
   # Gera o cliente e o servidor gRPC (CatalogServiceClient/Server).
-  - remote: buf.build/grpc/go
+  - remote: buf.build/grpc/go:v1.6.2
     out: gen/go
     opt: paths=source_relative
