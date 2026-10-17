@@ -24,6 +24,9 @@ jobs:
           breaking: true
           breaking_against: ${{ github.event_name == 'pull_request' && format('{0}#branch=main', github.event.repository.clone_url) || format('{0}#ref={1}', github.event.repository.clone_url, github.event.before) }}
           push: false
+          # Sem comentário no PR: o token padrão da CI só lê o repositório e o
+          # buf-action falha ao tentar escrever. O resultado aparece no próprio job.
+          pr_comment: false
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
@@ -34,5 +37,15 @@ jobs:
           buf generate
           git diff --exit-code gen/
       - run: go test ./...
+      # O pacote Python gerado (gen/python) precisa instalar e importar: é o
+      # que o passarim-photo-curator faz. Um erro aqui (ex.: falta de
+      # dependência no pyproject) só apareceria lá, bem mais tarde.
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: o pacote Python instala e importa
+        run: |
+          python -m pip install ./gen/python
+          python -c "from passarim.curator.v1 import curator_pb2, curator_pb2_grpc; from passarim.catalog.v1 import catalog_pb2"
       - name: govulncheck
         run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...

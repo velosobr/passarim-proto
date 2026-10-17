@@ -19,3 +19,13 @@ plugins:
   - remote: buf.build/grpc/go:v1.6.2
     out: gen/go
     opt: paths=source_relative
+  # Python: as mensagens (_pb2.py), as dicas de tipo para editores e para o
+  # mypy (_pb2.pyi) e o cliente e servidor gRPC (_pb2_grpc.py). Quem usa é o
+  # passarim-photo-curator. A versão do protocolbuffers/python acompanha a do
+  # pacote "protobuf" do PyPI: v36.2 gera código que exige protobuf >= 7.36.2.
+  - remote: buf.build/protocolbuffers/python:v36.2
+    out: gen/python
+  - remote: buf.build/protocolbuffers/pyi:v36.2
+    out: gen/python
+  - remote: buf.build/grpc/python:v1.84.0
+    out: gen/python

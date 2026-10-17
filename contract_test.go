@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	catalogv1 "github.com/velosobr/passarim-proto/gen/go/passarim/catalog/v1"
+	curatorv1 "github.com/velosobr/passarim-proto/gen/go/passarim/curator/v1"
 )
 
 // Uma espécie completa deve sobreviver a ida e volta pelo formato binário
@@ -121,5 +122,58 @@ func TestOccurrenceClusterHasPrecision(t *testing.T) {
 	}
 	if decoded.GetPrecision() != 0.5 {
 		t.Fatalf("precision = %v, want 0.5", decoded.GetPrecision())
+	}
+}
+
+// O veredito do curador precisa sobreviver à ida e volta pelo formato binário,
+// porque é assim que ele viaja do curador (Python) até o worker (Go) via gRPC.
+func TestPhotoVerdictRoundTrip(t *testing.T) {
+	original := &curatorv1.ClassifyPhotosResponse{
+		ModelVersion: "rtdetr-r50vd+openclip-b32@1",
+		Verdicts: []*curatorv1.PhotoVerdict{{
+			PhotoId:         "144156085",
+			Category:        curatorv1.PhotoCategory_PHOTO_CATEGORY_SINGLE_BIRD,
+			BirdCount:       1,
+			LargestBirdArea: 0.8,
+			LargestBirdCut:  true,
+			Sharpness:       0.6,
+			Confidence:      0.9,
+		}},
+	}
+	data, err := proto.Marshal(original)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var got curatorv1.ClassifyPhotosResponse
+	if err := proto.Unmarshal(data, &got); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if !proto.Equal(original, &got) {
+		t.Fatalf("ida e volta mudou a mensagem:\n antes %v\n depois %v", original, &got)
+	}
+}
+
+// Os números do enum são parte do contrato: o worker grava a categoria no banco
+// e o curador a envia como número. Trocar um número mudaria o significado de
+// fotos já classificadas, então o teste trava cada um.
+func TestPhotoCategoryNumbersAreStable(t *testing.T) {
+	want := map[curatorv1.PhotoCategory]protoreflect.EnumNumber{
+		curatorv1.PhotoCategory_PHOTO_CATEGORY_UNSPECIFIED: 0,
+		curatorv1.PhotoCategory_PHOTO_CATEGORY_SINGLE_BIRD: 1,
+		curatorv1.PhotoCategory_PHOTO_CATEGORY_FLOCK:       2,
+		curatorv1.PhotoCategory_PHOTO_CATEGORY_NEST:        3,
+		curatorv1.PhotoCategory_PHOTO_CATEGORY_EGGS:        4,
+		curatorv1.PhotoCategory_PHOTO_CATEGORY_FEATHER:     5,
+		curatorv1.PhotoCategory_PHOTO_CATEGORY_DEAD_BIRD:   6,
+		curatorv1.PhotoCategory_PHOTO_CATEGORY_NO_BIRD:     7,
+		curatorv1.PhotoCategory_PHOTO_CATEGORY_OTHER:       8,
+	}
+	for category, number := range want {
+		if category.Number() != number {
+			t.Errorf("%v: número %d, esperado %d", category, category.Number(), number)
+		}
+	}
+	if n := len(curatorv1.PhotoCategory_name); n != len(want) {
+		t.Errorf("o enum tem %d valores, o teste conhece %d: atualize o teste e o worker", n, len(want))
 	}
 }

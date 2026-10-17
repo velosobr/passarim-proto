@@ -1,0 +1,89 @@
+// curator.proto — contrato do curador de fotos (passarim-photo-curator).
+//
+// Quem usa: o worker do passarim-catalog chama este serviço durante a ingestão,
+// para saber o que cada foto candidata mostra. A API do catalog, o BFF e o app
+// não conhecem este serviço: se ele cair, o Passarim no ar continua igual.
+//
+// Por que um arquivo separado do catalog.proto: é outro serviço, escrito em
+// outra linguagem (Python) e com outro ciclo de vida. Separar deixa claro que
+// mudar a curadoria não mexe no contrato que o BFF consome.
+syntax = "proto3";
+
+package passarim.curator.v1;
+
+// PhotoCuratorService classifica fotos de aves.
+service PhotoCuratorService {
+  // ClassifyPhotos recebe de 1 a 8 fotos (bytes WebP da variante "medium", com
+  // 800 px no lado maior) e devolve um veredito por foto, na mesma ordem.
+  //
+  // O limite de 8 fotos mantém a mensagem bem abaixo dos 4 MB que o gRPC aceita
+  // por padrão. Lote vazio ou com mais de 8 fotos: INVALID_ARGUMENT.
+  // Uma foto que não abre NÃO derruba o lote: volta com PHOTO_CATEGORY_UNSPECIFIED.
+  rpc ClassifyPhotos(ClassifyPhotosRequest) returns (ClassifyPhotosResponse);
+}
+
+// ClassifyPhotosRequest é o lote de fotos a classificar.
+message ClassifyPhotosRequest {
+  repeated PhotoInput photos = 1;
+}
+
+// PhotoInput é uma foto do lote.
+message PhotoInput {
+  // photo_id é o id da foto no iNaturalist. O curador não o interpreta: só o
+  // devolve no veredito, para o worker saber de qual foto se trata.
+  string photo_id = 1;
+  // image são os bytes do arquivo (WebP), sem nenhuma conversão.
+  bytes image = 2;
+}
+
+// ClassifyPhotosResponse traz um veredito por foto, na ordem do pedido.
+message ClassifyPhotosResponse {
+  repeated PhotoVerdict verdicts = 1;
+  // model_version identifica os modelos e a regra que geraram os vereditos
+  // (ex.: "rtdetr-r50vd+openclip-b32@1"). O worker grava isso em cada foto, para
+  // saber quais fotos refazer quando o modelo mudar.
+  string model_version = 2;
+}
+
+// PhotoVerdict é o que o curador concluiu sobre uma foto.
+message PhotoVerdict {
+  string photo_id = 1;
+  // category: o que a foto mostra. UNSPECIFIED quando a imagem não abriu.
+  PhotoCategory category = 2;
+  // bird_count: quantas aves o detector achou.
+  int32 bird_count = 3;
+  // largest_bird_area: fração da foto ocupada pela caixa da maior ave, de 0 a 1.
+  float largest_bird_area = 4;
+  // largest_bird_cut: a caixa da maior ave encosta na borda da foto (ave cortada).
+  bool largest_bird_cut = 5;
+  // sharpness: nitidez da maior ave (ou da foto inteira, sem ave), de 0 a 1.
+  float sharpness = 6;
+  // confidence: o quanto o curador confia na categoria, de 0 a 1.
+  float confidence = 7;
+}
+
+// PhotoCategory é o que uma foto mostra. Os números são parte do contrato:
+// o worker os grava no banco, então nunca mudam de significado.
+enum PhotoCategory {
+  // O valor zero é obrigatório no proto3 e significa "não sei" (aqui: a
+  // imagem não abriu).
+  PHOTO_CATEGORY_UNSPECIFIED = 0;
+  // Uma ave sozinha (ou uma ave dominante com outras pequenas ao fundo).
+  // Só esta categoria pode ser a foto principal.
+  PHOTO_CATEGORY_SINGLE_BIRD = 1;
+  // Duas aves ou mais sem uma dominante, ou um bando. Pode entrar na galeria.
+  PHOTO_CATEGORY_FLOCK = 2;
+  // Ninho (com ou sem filhotes, ou com o adulto chocando). Descartada.
+  PHOTO_CATEGORY_NEST = 3;
+  // Ovos. Descartada.
+  PHOTO_CATEGORY_EGGS = 4;
+  // Pena solta. Descartada.
+  PHOTO_CATEGORY_FEATHER = 5;
+  // Ave morta. Descartada.
+  PHOTO_CATEGORY_DEAD_BIRD = 6;
+  // Nenhuma ave na foto. Descartada.
+  PHOTO_CATEGORY_NO_BIRD = 7;
+  // Outros casos: ave na mão, ilustração, foto de tela, ave escondida demais.
+  // Descartada.
+  PHOTO_CATEGORY_OTHER = 8;
+}

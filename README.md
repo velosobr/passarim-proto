@@ -32,3 +32,17 @@ go get github.com/velosobr/passarim-proto@latest
 ```go
 import catalogv1 "github.com/velosobr/passarim-proto/gen/go/passarim/catalog/v1"
 ```
+
+## Serviços
+
+| Arquivo | Serviço | Quem implementa | Quem chama |
+|---|---|---|---|
+| `proto/passarim/catalog/v1/catalog.proto` | `CatalogService` | passarim-catalog | passarim-bff |
+| `proto/passarim/curator/v1/curator.proto` | `PhotoCuratorService` | passarim-photo-curator | worker do passarim-catalog |
+
+## Código gerado
+
+- Go: `gen/go` (módulo `github.com/velosobr/passarim-proto`).
+- Python: `gen/python`, instalável como pacote (ver `gen/python/README.md`).
+
+Os dois são gerados com `buf generate` e versionados; a CI falha se estiverem desatualizados.
