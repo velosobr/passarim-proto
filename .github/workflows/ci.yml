@@ -24,6 +24,9 @@ jobs:
           breaking: true
           breaking_against: ${{ github.event_name == 'pull_request' && format('{0}#branch=main', github.event.repository.clone_url) || format('{0}#ref={1}', github.event.repository.clone_url, github.event.before) }}
           push: false
+          # Sem comentário no PR: o token padrão da CI só lê o repositório e o
+          # buf-action falha ao tentar escrever. O resultado aparece no próprio job.
+          pr_comment: false
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
