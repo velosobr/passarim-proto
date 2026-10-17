@@ -1,0 +1,27 @@
+# pyproject.toml — transforma o código Python gerado num pacote instalável.
+#
+# Quem usa: o passarim-photo-curator instala daqui com
+#   uv: [tool.uv.sources] passarim-proto = { git = "...", tag = "v0.3.0", subdirectory = "gen/python" }
+#
+# O buf não gera arquivos __init__.py. Por isso "passarim", "passarim.curator" e
+# "passarim.curator.v1" são "namespace packages": pastas que o Python aceita como
+# pacote mesmo sem __init__.py. O hatchling empacota a pasta "passarim" inteira.
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[project]
+name = "passarim-proto"
+version = "0.3.0"
+description = "Código Python gerado dos contratos gRPC do Passarim"
+requires-python = ">=3.10"
+# O código gerado confere a versão do protobuf ao ser importado
+# (ValidateProtobufRuntimeVersion) e recusa uma versão mais velha que a do
+# plugin. Por isso o mínimo aqui é o mesmo do plugin (v36.2 -> 7.36.2).
+dependencies = [
+  "protobuf>=7.36.2",
+  "grpcio>=1.84.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["passarim"]
