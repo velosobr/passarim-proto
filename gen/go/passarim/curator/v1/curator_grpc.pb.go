@@ -39,7 +39,7 @@ const (
 // PhotoCuratorService classifica fotos de aves.
 type PhotoCuratorServiceClient interface {
 	// ClassifyPhotos recebe de 1 a 8 fotos (bytes WebP da variante "medium", com
-	// 800 px no lado maior) e devolve um veredito por foto, na mesma ordem.
+	// até 800 px de largura) e devolve um veredito por foto, na mesma ordem.
 	//
 	// O limite de 8 fotos mantém a mensagem bem abaixo dos 4 MB que o gRPC aceita
 	// por padrão. Lote vazio ou com mais de 8 fotos: INVALID_ARGUMENT.
@@ -72,7 +72,7 @@ func (c *photoCuratorServiceClient) ClassifyPhotos(ctx context.Context, in *Clas
 // PhotoCuratorService classifica fotos de aves.
 type PhotoCuratorServiceServer interface {
 	// ClassifyPhotos recebe de 1 a 8 fotos (bytes WebP da variante "medium", com
-	// 800 px no lado maior) e devolve um veredito por foto, na mesma ordem.
+	// até 800 px de largura) e devolve um veredito por foto, na mesma ordem.
 	//
 	// O limite de 8 fotos mantém a mensagem bem abaixo dos 4 MB que o gRPC aceita
 	// por padrão. Lote vazio ou com mais de 8 fotos: INVALID_ARGUMENT.
