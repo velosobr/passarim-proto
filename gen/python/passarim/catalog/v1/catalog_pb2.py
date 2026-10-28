@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n!passarim/catalog/v1/catalog.proto\x12\x13passarim.catalog.v1\"q\n\x06\x43redit\x12\x16\n\x06\x61uthor\x18\x01 \x01(\tR\x06\x61uthor\x12\x18\n\x07license\x18\x02 \x01(\tR\x07license\x12\x16\n\x06source\x18\x03 \x01(\tR\x06source\x12\x1d\n\nsource_url\x18\x04 \x01(\tR\tsourceUrl\"\xc3\x01\n\x05Photo\x12\x1b\n\tthumb_key\x18\x01 \x01(\tR\x08thumbKey\x12\x1d\n\nmedium_key\x18\x02 \x01(\tR\tmediumKey\x12\x1b\n\tlarge_key\x18\x03 \x01(\tR\x08largeKey\x12\x14\n\x05width\x18\x04 \x01(\x05R\x05width\x12\x16\n\x06height\x18\x05 \x01(\x05R\x06height\x12\x33\n\x06\x63redit\x18\x06 \x01(\x0b\x32\x1b.passarim.catalog.v1.CreditR\x06\x63redit\"o\n\x05\x41udio\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x1f\n\x0b\x64uration_ms\x18\x02 \x01(\x05R\ndurationMs\x12\x33\n\x06\x63redit\x18\x03 \x01(\x0b\x32\x1b.passarim.catalog.v1.CreditR\x06\x63redit\"2\n\x04\x46\x61\x63t\x12\x12\n\x04text\x18\x01 \x01(\tR\x04text\x12\x16\n\x06source\x18\x02 \x01(\tR\x06source\"k\n\x11OccurrenceCluster\x12\x10\n\x03lat\x18\x01 \x01(\x01R\x03lat\x12\x10\n\x03lng\x18\x02 \x01(\x01R\x03lng\x12\x14\n\x05\x63ount\x18\x03 \x01(\x05R\x05\x63ount\x12\x1c\n\tprecision\x18\x04 \x01(\x01R\tprecision\"\xee\x01\n\x0eSpeciesSummary\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\'\n\x0fscientific_name\x18\x02 \x01(\tR\x0escientificName\x12$\n\x0e\x63ommon_name_pt\x18\x03 \x01(\tR\x0c\x63ommonNamePt\x12#\n\rthumbnail_key\x18\x04 \x01(\tR\x0cthumbnailKey\x12X\n\x13\x63onservation_status\x18\x05 \x01(\x0e\x32\'.passarim.catalog.v1.ConservationStatusR\x12\x63onservationStatus\"\xbb\x05\n\x07Species\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\'\n\x0fscientific_name\x18\x02 \x01(\tR\x0escientificName\x12$\n\x0e\x63ommon_name_pt\x18\x03 \x01(\tR\x0c\x63ommonNamePt\x12\x16\n\x06\x66\x61mily\x18\x04 \x01(\tR\x06\x66\x61mily\x12\x1c\n\x07size_cm\x18\x05 \x01(\x05H\x00R\x06sizeCm\x88\x01\x01\x12\x17\n\x04\x64iet\x18\x06 \x01(\tH\x01R\x04\x64iet\x88\x01\x01\x12X\n\x13\x63onservation_status\x18\x07 \x01(\x0e\x32\'.passarim.catalog.v1.ConservationStatusR\x12\x63onservationStatus\x12 \n\x0b\x64\x65scription\x18\x08 \x01(\tR\x0b\x64\x65scription\x12J\n\x12\x64\x65scription_credit\x18\t \x01(\x0b\x32\x1b.passarim.catalog.v1.CreditR\x11\x64\x65scriptionCredit\x12/\n\x05\x66\x61\x63ts\x18\n \x03(\x0b\x32\x19.passarim.catalog.v1.FactR\x05\x66\x61\x63ts\x12\x32\n\x06\x62iomes\x18\x0b \x03(\x0e\x32\x1a.passarim.catalog.v1.BiomeR\x06\x62iomes\x12\x16\n\x06states\x18\x0c \x03(\tR\x06states\x12\x32\n\x06photos\x18\r \x03(\x0b\x32\x1a.passarim.catalog.v1.PhotoR\x06photos\x12\x30\n\x05\x61udio\x18\x0e \x01(\x0b\x32\x1a.passarim.catalog.v1.AudioR\x05\x61udio\x12\x42\n\x08\x63lusters\x18\x0f \x03(\x0b\x32&.passarim.catalog.v1.OccurrenceClusterR\x08\x63lustersB\n\n\x08_size_cmB\x07\n\x05_diet\"\xae\x01\n\x12ListSpeciesRequest\x12\x14\n\x05query\x18\x01 \x01(\tR\x05query\x12\x30\n\x05\x62iome\x18\x02 \x01(\x0e\x32\x1a.passarim.catalog.v1.BiomeR\x05\x62iome\x12\x14\n\x05state\x18\x03 \x01(\tR\x05state\x12\x1b\n\tpage_size\x18\x04 \x01(\x05R\x08pageSize\x12\x1d\n\npage_token\x18\x05 \x01(\tR\tpageToken\"|\n\x13ListSpeciesResponse\x12=\n\x07species\x18\x01 \x03(\x0b\x32#.passarim.catalog.v1.SpeciesSummaryR\x07species\x12&\n\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"#\n\x11GetSpeciesRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"L\n\x12GetSpeciesResponse\x12\x36\n\x07species\x18\x01 \x01(\x0b\x32\x1c.passarim.catalog.v1.SpeciesR\x07species\"\x14\n\x12ListFiltersRequest\"c\n\nBiomeCount\x12\x30\n\x05\x62iome\x18\x01 \x01(\x0e\x32\x1a.passarim.catalog.v1.BiomeR\x05\x62iome\x12#\n\rspecies_count\x18\x02 \x01(\x05R\x0cspeciesCount\"G\n\nStateCount\x12\x14\n\x05state\x18\x01 \x01(\tR\x05state\x12#\n\rspecies_count\x18\x02 \x01(\x05R\x0cspeciesCount\"\x87\x01\n\x13ListFiltersResponse\x12\x37\n\x06\x62iomes\x18\x01 \x03(\x0b\x32\x1f.passarim.catalog.v1.BiomeCountR\x06\x62iomes\x12\x37\n\x06states\x18\x02 \x03(\x0b\x32\x1f.passarim.catalog.v1.StateCountR\x06states*\x98\x01\n\x05\x42iome\x12\x15\n\x11\x42IOME_UNSPECIFIED\x10\x00\x12\x12\n\x0e\x42IOME_AMAZONIA\x10\x01\x12\x18\n\x14\x42IOME_MATA_ATLANTICA\x10\x02\x12\x11\n\rBIOME_CERRADO\x10\x03\x12\x12\n\x0e\x42IOME_CAATINGA\x10\x04\x12\x12\n\x0e\x42IOME_PANTANAL\x10\x05\x12\x0f\n\x0b\x42IOME_PAMPA\x10\x06*\x99\x02\n\x12\x43onservationStatus\x12#\n\x1f\x43ONSERVATION_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n\x16\x43ONSERVATION_STATUS_LC\x10\x01\x12\x1a\n\x16\x43ONSERVATION_STATUS_NT\x10\x02\x12\x1a\n\x16\x43ONSERVATION_STATUS_VU\x10\x03\x12\x1a\n\x16\x43ONSERVATION_STATUS_EN\x10\x04\x12\x1a\n\x16\x43ONSERVATION_STATUS_CR\x10\x05\x12\x1a\n\x16\x43ONSERVATION_STATUS_EW\x10\x06\x12\x1a\n\x16\x43ONSERVATION_STATUS_EX\x10\x07\x12\x1a\n\x16\x43ONSERVATION_STATUS_DD\x10\x08\x32\xb3\x02\n\x0e\x43\x61talogService\x12`\n\x0bListSpecies\x12\'.passarim.catalog.v1.ListSpeciesRequest\x1a(.passarim.catalog.v1.ListSpeciesResponse\x12]\n\nGetSpecies\x12&.passarim.catalog.v1.GetSpeciesRequest\x1a\'.passarim.catalog.v1.GetSpeciesResponse\x12`\n\x0bListFilters\x12\'.passarim.catalog.v1.ListFiltersRequest\x1a(.passarim.catalog.v1.ListFiltersResponseB\xde\x01\n\x17\x63om.passarim.catalog.v1B\x0c\x43\x61talogProtoP\x01ZGgithub.com/velosobr/passarim-proto/gen/go/passarim/catalog/v1;catalogv1\xa2\x02\x03PCX\xaa\x02\x13Passarim.Catalog.V1\xca\x02\x13Passarim\\Catalog\\V1\xe2\x02\x1fPassarim\\Catalog\\V1\\GPBMetadata\xea\x02\x15Passarim::Catalog::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n!passarim/catalog/v1/catalog.proto\x12\x13passarim.catalog.v1\"q\n\x06\x43redit\x12\x16\n\x06\x61uthor\x18\x01 \x01(\tR\x06\x61uthor\x12\x18\n\x07license\x18\x02 \x01(\tR\x07license\x12\x16\n\x06source\x18\x03 \x01(\tR\x06source\x12\x1d\n\nsource_url\x18\x04 \x01(\tR\tsourceUrl\"\xc3\x01\n\x05Photo\x12\x1b\n\tthumb_key\x18\x01 \x01(\tR\x08thumbKey\x12\x1d\n\nmedium_key\x18\x02 \x01(\tR\tmediumKey\x12\x1b\n\tlarge_key\x18\x03 \x01(\tR\x08largeKey\x12\x14\n\x05width\x18\x04 \x01(\x05R\x05width\x12\x16\n\x06height\x18\x05 \x01(\x05R\x06height\x12\x33\n\x06\x63redit\x18\x06 \x01(\x0b\x32\x1b.passarim.catalog.v1.CreditR\x06\x63redit\"\x85\x01\n\x05\x41udio\x12\x10\n\x03key\x18\x01 \x01(\tR\x03key\x12\x1f\n\x0b\x64uration_ms\x18\x02 \x01(\x05R\ndurationMs\x12\x33\n\x06\x63redit\x18\x03 \x01(\x0b\x32\x1b.passarim.catalog.v1.CreditR\x06\x63redit\x12\x14\n\x05peaks\x18\x04 \x03(\x02R\x05peaks\"2\n\x04\x46\x61\x63t\x12\x12\n\x04text\x18\x01 \x01(\tR\x04text\x12\x16\n\x06source\x18\x02 \x01(\tR\x06source\"k\n\x11OccurrenceCluster\x12\x10\n\x03lat\x18\x01 \x01(\x01R\x03lat\x12\x10\n\x03lng\x18\x02 \x01(\x01R\x03lng\x12\x14\n\x05\x63ount\x18\x03 \x01(\x05R\x05\x63ount\x12\x1c\n\tprecision\x18\x04 \x01(\x01R\tprecision\"\xaf\x02\n\x0eSpeciesSummary\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\'\n\x0fscientific_name\x18\x02 \x01(\tR\x0escientificName\x12$\n\x0e\x63ommon_name_pt\x18\x03 \x01(\tR\x0c\x63ommonNamePt\x12#\n\rthumbnail_key\x18\x04 \x01(\tR\x0cthumbnailKey\x12X\n\x13\x63onservation_status\x18\x05 \x01(\x0e\x32\'.passarim.catalog.v1.ConservationStatusR\x12\x63onservationStatus\x12?\n\rprimary_biome\x18\x06 \x01(\x0e\x32\x1a.passarim.catalog.v1.BiomeR\x0cprimaryBiome\"\xb2\x06\n\x07Species\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\'\n\x0fscientific_name\x18\x02 \x01(\tR\x0escientificName\x12$\n\x0e\x63ommon_name_pt\x18\x03 \x01(\tR\x0c\x63ommonNamePt\x12\x16\n\x06\x66\x61mily\x18\x04 \x01(\tR\x06\x66\x61mily\x12\x1c\n\x07size_cm\x18\x05 \x01(\x05H\x00R\x06sizeCm\x88\x01\x01\x12\x17\n\x04\x64iet\x18\x06 \x01(\tH\x01R\x04\x64iet\x88\x01\x01\x12X\n\x13\x63onservation_status\x18\x07 \x01(\x0e\x32\'.passarim.catalog.v1.ConservationStatusR\x12\x63onservationStatus\x12 \n\x0b\x64\x65scription\x18\x08 \x01(\tR\x0b\x64\x65scription\x12J\n\x12\x64\x65scription_credit\x18\t \x01(\x0b\x32\x1b.passarim.catalog.v1.CreditR\x11\x64\x65scriptionCredit\x12/\n\x05\x66\x61\x63ts\x18\n \x03(\x0b\x32\x19.passarim.catalog.v1.FactR\x05\x66\x61\x63ts\x12\x32\n\x06\x62iomes\x18\x0b \x03(\x0e\x32\x1a.passarim.catalog.v1.BiomeR\x06\x62iomes\x12\x16\n\x06states\x18\x0c \x03(\tR\x06states\x12\x32\n\x06photos\x18\r \x03(\x0b\x32\x1a.passarim.catalog.v1.PhotoR\x06photos\x12\x30\n\x05\x61udio\x18\x0e \x01(\x0b\x32\x1a.passarim.catalog.v1.AudioR\x05\x61udio\x12\x42\n\x08\x63lusters\x18\x0f \x03(\x0b\x32&.passarim.catalog.v1.OccurrenceClusterR\x08\x63lusters\x12\x34\n\x04kids\x18\x10 \x01(\x0b\x32 .passarim.catalog.v1.KidsContentR\x04kids\x12?\n\rprimary_biome\x18\x11 \x01(\x0e\x32\x1a.passarim.catalog.v1.BiomeR\x0cprimaryBiomeB\n\n\x08_size_cmB\x07\n\x05_diet\"\x8c\x02\n\x12ListSpeciesRequest\x12\x14\n\x05query\x18\x01 \x01(\tR\x05query\x12\x30\n\x05\x62iome\x18\x02 \x01(\x0e\x32\x1a.passarim.catalog.v1.BiomeR\x05\x62iome\x12\x14\n\x05state\x18\x03 \x01(\tR\x05state\x12\x1b\n\tpage_size\x18\x04 \x01(\x05R\x08pageSize\x12\x1d\n\npage_token\x18\x05 \x01(\tR\tpageToken\x12\x1b\n\tkids_only\x18\x06 \x01(\x08R\x08kidsOnly\x12?\n\rprimary_biome\x18\x07 \x01(\x0e\x32\x1a.passarim.catalog.v1.BiomeR\x0cprimaryBiome\"|\n\x13ListSpeciesResponse\x12=\n\x07species\x18\x01 \x03(\x0b\x32#.passarim.catalog.v1.SpeciesSummaryR\x07species\x12&\n\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"#\n\x11GetSpeciesRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"L\n\x12GetSpeciesResponse\x12\x36\n\x07species\x18\x01 \x01(\x0b\x32\x1c.passarim.catalog.v1.SpeciesR\x07species\"1\n\x12ListFiltersRequest\x12\x1b\n\tkids_only\x18\x01 \x01(\x08R\x08kidsOnly\"c\n\nBiomeCount\x12\x30\n\x05\x62iome\x18\x01 \x01(\x0e\x32\x1a.passarim.catalog.v1.BiomeR\x05\x62iome\x12#\n\rspecies_count\x18\x02 \x01(\x05R\x0cspeciesCount\"G\n\nStateCount\x12\x14\n\x05state\x18\x01 \x01(\tR\x05state\x12#\n\rspecies_count\x18\x02 \x01(\x05R\x0cspeciesCount\"\xda\x01\n\x13ListFiltersResponse\x12\x37\n\x06\x62iomes\x18\x01 \x03(\x0b\x32\x1f.passarim.catalog.v1.BiomeCountR\x06\x62iomes\x12\x37\n\x06states\x18\x02 \x03(\x0b\x32\x1f.passarim.catalog.v1.StateCountR\x06states\x12Q\n\x14primary_biome_counts\x18\x03 \x03(\x0b\x32\x1f.passarim.catalog.v1.BiomeCountR\x12primaryBiomeCounts\"?\n\x08KidsFact\x12\x12\n\x04text\x18\x01 \x01(\tR\x04text\x12\x1f\n\x0bsource_fact\x18\x02 \x01(\x05R\nsourceFact\"\x86\x01\n\x0bKidsContent\x12 \n\x0b\x64\x65scription\x18\x01 \x01(\tR\x0b\x64\x65scription\x12\x33\n\x05\x66\x61\x63ts\x18\x02 \x03(\x0b\x32\x1d.passarim.catalog.v1.KidsFactR\x05\x66\x61\x63ts\x12 \n\x0c\x64id_you_know\x18\x03 \x01(\tR\ndidYouKnow\"/\n\x19GetFeaturedSpeciesRequest\x12\x12\n\x04\x64\x61te\x18\x01 \x01(\tR\x04\x64\x61te\"\x8d\x01\n\x1aGetFeaturedSpeciesResponse\x12=\n\x07species\x18\x01 \x01(\x0b\x32#.passarim.catalog.v1.SpeciesSummaryR\x07species\x12\x30\n\x05\x61udio\x18\x02 \x01(\x0b\x32\x1a.passarim.catalog.v1.AudioR\x05\x61udio*\x98\x01\n\x05\x42iome\x12\x15\n\x11\x42IOME_UNSPECIFIED\x10\x00\x12\x12\n\x0e\x42IOME_AMAZONIA\x10\x01\x12\x18\n\x14\x42IOME_MATA_ATLANTICA\x10\x02\x12\x11\n\rBIOME_CERRADO\x10\x03\x12\x12\n\x0e\x42IOME_CAATINGA\x10\x04\x12\x12\n\x0e\x42IOME_PANTANAL\x10\x05\x12\x0f\n\x0b\x42IOME_PAMPA\x10\x06*\x99\x02\n\x12\x43onservationStatus\x12#\n\x1f\x43ONSERVATION_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n\x16\x43ONSERVATION_STATUS_LC\x10\x01\x12\x1a\n\x16\x43ONSERVATION_STATUS_NT\x10\x02\x12\x1a\n\x16\x43ONSERVATION_STATUS_VU\x10\x03\x12\x1a\n\x16\x43ONSERVATION_STATUS_EN\x10\x04\x12\x1a\n\x16\x43ONSERVATION_STATUS_CR\x10\x05\x12\x1a\n\x16\x43ONSERVATION_STATUS_EW\x10\x06\x12\x1a\n\x16\x43ONSERVATION_STATUS_EX\x10\x07\x12\x1a\n\x16\x43ONSERVATION_STATUS_DD\x10\x08\x32\xaa\x03\n\x0e\x43\x61talogService\x12`\n\x0bListSpecies\x12\'.passarim.catalog.v1.ListSpeciesRequest\x1a(.passarim.catalog.v1.ListSpeciesResponse\x12]\n\nGetSpecies\x12&.passarim.catalog.v1.GetSpeciesRequest\x1a\'.passarim.catalog.v1.GetSpeciesResponse\x12`\n\x0bListFilters\x12\'.passarim.catalog.v1.ListFiltersRequest\x1a(.passarim.catalog.v1.ListFiltersResponse\x12u\n\x12GetFeaturedSpecies\x12..passarim.catalog.v1.GetFeaturedSpeciesRequest\x1a/.passarim.catalog.v1.GetFeaturedSpeciesResponseB\xde\x01\n\x17\x63om.passarim.catalog.v1B\x0c\x43\x61talogProtoP\x01ZGgithub.com/velosobr/passarim-proto/gen/go/passarim/catalog/v1;catalogv1\xa2\x02\x03PCX\xaa\x02\x13Passarim.Catalog.V1\xca\x02\x13Passarim\\Catalog\\V1\xe2\x02\x1fPassarim\\Catalog\\V1\\GPBMetadata\xea\x02\x15Passarim::Catalog::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,40 +32,48 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'passarim.catalog.v1.catalog
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\027com.passarim.catalog.v1B\014CatalogProtoP\001ZGgithub.com/velosobr/passarim-proto/gen/go/passarim/catalog/v1;catalogv1\242\002\003PCX\252\002\023Passarim.Catalog.V1\312\002\023Passarim\\Catalog\\V1\342\002\037Passarim\\Catalog\\V1\\GPBMetadata\352\002\025Passarim::Catalog::V1'
-  _globals['_BIOME']._serialized_start=2341
-  _globals['_BIOME']._serialized_end=2493
-  _globals['_CONSERVATIONSTATUS']._serialized_start=2496
-  _globals['_CONSERVATIONSTATUS']._serialized_end=2777
+  _globals['_BIOME']._serialized_start=3149
+  _globals['_BIOME']._serialized_end=3301
+  _globals['_CONSERVATIONSTATUS']._serialized_start=3304
+  _globals['_CONSERVATIONSTATUS']._serialized_end=3585
   _globals['_CREDIT']._serialized_start=58
   _globals['_CREDIT']._serialized_end=171
   _globals['_PHOTO']._serialized_start=174
   _globals['_PHOTO']._serialized_end=369
-  _globals['_AUDIO']._serialized_start=371
-  _globals['_AUDIO']._serialized_end=482
-  _globals['_FACT']._serialized_start=484
-  _globals['_FACT']._serialized_end=534
-  _globals['_OCCURRENCECLUSTER']._serialized_start=536
-  _globals['_OCCURRENCECLUSTER']._serialized_end=643
-  _globals['_SPECIESSUMMARY']._serialized_start=646
-  _globals['_SPECIESSUMMARY']._serialized_end=884
-  _globals['_SPECIES']._serialized_start=887
-  _globals['_SPECIES']._serialized_end=1586
-  _globals['_LISTSPECIESREQUEST']._serialized_start=1589
-  _globals['_LISTSPECIESREQUEST']._serialized_end=1763
-  _globals['_LISTSPECIESRESPONSE']._serialized_start=1765
-  _globals['_LISTSPECIESRESPONSE']._serialized_end=1889
-  _globals['_GETSPECIESREQUEST']._serialized_start=1891
-  _globals['_GETSPECIESREQUEST']._serialized_end=1926
-  _globals['_GETSPECIESRESPONSE']._serialized_start=1928
-  _globals['_GETSPECIESRESPONSE']._serialized_end=2004
-  _globals['_LISTFILTERSREQUEST']._serialized_start=2006
-  _globals['_LISTFILTERSREQUEST']._serialized_end=2026
-  _globals['_BIOMECOUNT']._serialized_start=2028
-  _globals['_BIOMECOUNT']._serialized_end=2127
-  _globals['_STATECOUNT']._serialized_start=2129
-  _globals['_STATECOUNT']._serialized_end=2200
-  _globals['_LISTFILTERSRESPONSE']._serialized_start=2203
-  _globals['_LISTFILTERSRESPONSE']._serialized_end=2338
-  _globals['_CATALOGSERVICE']._serialized_start=2780
-  _globals['_CATALOGSERVICE']._serialized_end=3087
+  _globals['_AUDIO']._serialized_start=372
+  _globals['_AUDIO']._serialized_end=505
+  _globals['_FACT']._serialized_start=507
+  _globals['_FACT']._serialized_end=557
+  _globals['_OCCURRENCECLUSTER']._serialized_start=559
+  _globals['_OCCURRENCECLUSTER']._serialized_end=666
+  _globals['_SPECIESSUMMARY']._serialized_start=669
+  _globals['_SPECIESSUMMARY']._serialized_end=972
+  _globals['_SPECIES']._serialized_start=975
+  _globals['_SPECIES']._serialized_end=1793
+  _globals['_LISTSPECIESREQUEST']._serialized_start=1796
+  _globals['_LISTSPECIESREQUEST']._serialized_end=2064
+  _globals['_LISTSPECIESRESPONSE']._serialized_start=2066
+  _globals['_LISTSPECIESRESPONSE']._serialized_end=2190
+  _globals['_GETSPECIESREQUEST']._serialized_start=2192
+  _globals['_GETSPECIESREQUEST']._serialized_end=2227
+  _globals['_GETSPECIESRESPONSE']._serialized_start=2229
+  _globals['_GETSPECIESRESPONSE']._serialized_end=2305
+  _globals['_LISTFILTERSREQUEST']._serialized_start=2307
+  _globals['_LISTFILTERSREQUEST']._serialized_end=2356
+  _globals['_BIOMECOUNT']._serialized_start=2358
+  _globals['_BIOMECOUNT']._serialized_end=2457
+  _globals['_STATECOUNT']._serialized_start=2459
+  _globals['_STATECOUNT']._serialized_end=2530
+  _globals['_LISTFILTERSRESPONSE']._serialized_start=2533
+  _globals['_LISTFILTERSRESPONSE']._serialized_end=2751
+  _globals['_KIDSFACT']._serialized_start=2753
+  _globals['_KIDSFACT']._serialized_end=2816
+  _globals['_KIDSCONTENT']._serialized_start=2819
+  _globals['_KIDSCONTENT']._serialized_end=2953
+  _globals['_GETFEATUREDSPECIESREQUEST']._serialized_start=2955
+  _globals['_GETFEATUREDSPECIESREQUEST']._serialized_end=3002
+  _globals['_GETFEATUREDSPECIESRESPONSE']._serialized_start=3005
+  _globals['_GETFEATUREDSPECIESRESPONSE']._serialized_end=3146
+  _globals['_CATALOGSERVICE']._serialized_start=3588
+  _globals['_CATALOGSERVICE']._serialized_end=4014
 # @@protoc_insertion_point(module_scope)

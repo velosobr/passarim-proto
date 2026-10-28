@@ -327,10 +327,14 @@ func (x *Photo) GetCredit() *Credit {
 
 // Gravação do canto, já convertida para AAC.
 type Audio struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	DurationMs    int32                  `protobuf:"varint,2,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
-	Credit        *Credit                `protobuf:"bytes,3,opt,name=credit,proto3" json:"credit,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Key        string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	DurationMs int32                  `protobuf:"varint,2,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
+	Credit     *Credit                `protobuf:"bytes,3,opt,name=credit,proto3" json:"credit,omitempty"`
+	// 64 picos do canto, de 0 a 1, para o app desenhar a forma de onda real.
+	// "repeated" é uma lista. Vazia = áudio gravado antes da frente B (o app
+	// desenha uma forma genérica).
+	Peaks         []float32 `protobuf:"fixed32,4,rep,packed,name=peaks,proto3" json:"peaks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -382,6 +386,13 @@ func (x *Audio) GetDurationMs() int32 {
 func (x *Audio) GetCredit() *Credit {
 	if x != nil {
 		return x.Credit
+	}
+	return nil
+}
+
+func (x *Audio) GetPeaks() []float32 {
+	if x != nil {
+		return x.Peaks
 	}
 	return nil
 }
@@ -519,8 +530,11 @@ type SpeciesSummary struct {
 	CommonNamePt       string                 `protobuf:"bytes,3,opt,name=common_name_pt,json=commonNamePt,proto3" json:"common_name_pt,omitempty"`
 	ThumbnailKey       string                 `protobuf:"bytes,4,opt,name=thumbnail_key,json=thumbnailKey,proto3" json:"thumbnail_key,omitempty"`
 	ConservationStatus ConservationStatus     `protobuf:"varint,5,opt,name=conservation_status,json=conservationStatus,proto3,enum=passarim.catalog.v1.ConservationStatus" json:"conservation_status,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// O "mundo" da ave no Kids: um dos biomas dela. UNSPECIFIED = a espécie
+	// ainda não tem conteúdo Kids.
+	PrimaryBiome  Biome `protobuf:"varint,6,opt,name=primary_biome,json=primaryBiome,proto3,enum=passarim.catalog.v1.Biome" json:"primary_biome,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SpeciesSummary) Reset() {
@@ -588,6 +602,13 @@ func (x *SpeciesSummary) GetConservationStatus() ConservationStatus {
 	return ConservationStatus_CONSERVATION_STATUS_UNSPECIFIED
 }
 
+func (x *SpeciesSummary) GetPrimaryBiome() Biome {
+	if x != nil {
+		return x.PrimaryBiome
+	}
+	return Biome_BIOME_UNSPECIFIED
+}
+
 // Versão completa, usada na tela de detalhe.
 type Species struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
@@ -606,8 +627,13 @@ type Species struct {
 	States             []string           `protobuf:"bytes,12,rep,name=states,proto3" json:"states,omitempty"` // siglas das UFs, ex.: "MS"
 	Photos             []*Photo           `protobuf:"bytes,13,rep,name=photos,proto3" json:"photos,omitempty"` // a primeira é a principal
 	// Mensagens já podem ser nulas: ave sem canto => audio ausente.
-	Audio         *Audio               `protobuf:"bytes,14,opt,name=audio,proto3" json:"audio,omitempty"`
-	Clusters      []*OccurrenceCluster `protobuf:"bytes,15,rep,name=clusters,proto3" json:"clusters,omitempty"`
+	Audio    *Audio               `protobuf:"bytes,14,opt,name=audio,proto3" json:"audio,omitempty"`
+	Clusters []*OccurrenceCluster `protobuf:"bytes,15,rep,name=clusters,proto3" json:"clusters,omitempty"`
+	// Conteúdo para crianças (Passarim Kids). Ausente = a espécie ainda não
+	// tem texto Kids revisado e não aparece no Kids.
+	Kids *KidsContent `protobuf:"bytes,16,opt,name=kids,proto3" json:"kids,omitempty"`
+	// O "mundo" da ave no Kids, como em SpeciesSummary.primary_biome.
+	PrimaryBiome  Biome `protobuf:"varint,17,opt,name=primary_biome,json=primaryBiome,proto3,enum=passarim.catalog.v1.Biome" json:"primary_biome,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -747,14 +773,32 @@ func (x *Species) GetClusters() []*OccurrenceCluster {
 	return nil
 }
 
+func (x *Species) GetKids() *KidsContent {
+	if x != nil {
+		return x.Kids
+	}
+	return nil
+}
+
+func (x *Species) GetPrimaryBiome() Biome {
+	if x != nil {
+		return x.PrimaryBiome
+	}
+	return Biome_BIOME_UNSPECIFIED
+}
+
 type ListSpeciesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Query string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`                                 // busca por nome popular ou científico (vazio = todas)
 	Biome Biome                  `protobuf:"varint,2,opt,name=biome,proto3,enum=passarim.catalog.v1.Biome" json:"biome,omitempty"` // UNSPECIFIED = sem filtro
 	State string                 `protobuf:"bytes,3,opt,name=state,proto3" json:"state,omitempty"`                                 // UF; vazio = sem filtro
 	// Quantos itens por página. 0 = padrão (20). Acima de 50 = 50. Negativo = erro.
-	PageSize      int32  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken     string `protobuf:"bytes,5,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"` // cursor opaco devolvido na página anterior
+	PageSize  int32  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken string `protobuf:"bytes,5,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"` // cursor opaco devolvido na página anterior
+	KidsOnly  bool   `protobuf:"varint,6,opt,name=kids_only,json=kidsOnly,proto3" json:"kids_only,omitempty"`   // true = só as espécies com conteúdo Kids
+	// Filtra pelo bioma principal ("mundo" do Kids). UNSPECIFIED = sem filtro.
+	// Diferente de "biome", que filtra por QUALQUER bioma em que a ave vive.
+	PrimaryBiome  Biome `protobuf:"varint,7,opt,name=primary_biome,json=primaryBiome,proto3,enum=passarim.catalog.v1.Biome" json:"primary_biome,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -822,6 +866,20 @@ func (x *ListSpeciesRequest) GetPageToken() string {
 		return x.PageToken
 	}
 	return ""
+}
+
+func (x *ListSpeciesRequest) GetKidsOnly() bool {
+	if x != nil {
+		return x.KidsOnly
+	}
+	return false
+}
+
+func (x *ListSpeciesRequest) GetPrimaryBiome() Biome {
+	if x != nil {
+		return x.PrimaryBiome
+	}
+	return Biome_BIOME_UNSPECIFIED
 }
 
 type ListSpeciesResponse struct {
@@ -966,6 +1024,7 @@ func (x *GetSpeciesResponse) GetSpecies() *Species {
 
 type ListFiltersRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	KidsOnly      bool                   `protobuf:"varint,1,opt,name=kids_only,json=kidsOnly,proto3" json:"kids_only,omitempty"` // true = as contagens consideram só as espécies com conteúdo Kids
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -998,6 +1057,13 @@ func (x *ListFiltersRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ListFiltersRequest.ProtoReflect.Descriptor instead.
 func (*ListFiltersRequest) Descriptor() ([]byte, []int) {
 	return file_passarim_catalog_v1_catalog_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ListFiltersRequest) GetKidsOnly() bool {
+	if x != nil {
+		return x.KidsOnly
+	}
+	return false
 }
 
 type BiomeCount struct {
@@ -1105,11 +1171,13 @@ func (x *StateCount) GetSpeciesCount() int32 {
 }
 
 type ListFiltersResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Biomes        []*BiomeCount          `protobuf:"bytes,1,rep,name=biomes,proto3" json:"biomes,omitempty"`
-	States        []*StateCount          `protobuf:"bytes,2,rep,name=states,proto3" json:"states,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Biomes []*BiomeCount          `protobuf:"bytes,1,rep,name=biomes,proto3" json:"biomes,omitempty"`
+	States []*StateCount          `protobuf:"bytes,2,rep,name=states,proto3" json:"states,omitempty"`
+	// Contagem por bioma principal: quantas aves há em cada "mundo" do Kids.
+	PrimaryBiomeCounts []*BiomeCount `protobuf:"bytes,3,rep,name=primary_biome_counts,json=primaryBiomeCounts,proto3" json:"primary_biome_counts,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *ListFiltersResponse) Reset() {
@@ -1156,6 +1224,230 @@ func (x *ListFiltersResponse) GetStates() []*StateCount {
 	return nil
 }
 
+func (x *ListFiltersResponse) GetPrimaryBiomeCounts() []*BiomeCount {
+	if x != nil {
+		return x.PrimaryBiomeCounts
+	}
+	return nil
+}
+
+// Um fato para crianças. source_fact é a posição (a partir de 0) do fato
+// adulto de onde ele saiu: o texto Kids nunca inventa um fato novo.
+type KidsFact struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	SourceFact    int32                  `protobuf:"varint,2,opt,name=source_fact,json=sourceFact,proto3" json:"source_fact,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *KidsFact) Reset() {
+	*x = KidsFact{}
+	mi := &file_passarim_catalog_v1_catalog_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KidsFact) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KidsFact) ProtoMessage() {}
+
+func (x *KidsFact) ProtoReflect() protoreflect.Message {
+	mi := &file_passarim_catalog_v1_catalog_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KidsFact.ProtoReflect.Descriptor instead.
+func (*KidsFact) Descriptor() ([]byte, []int) {
+	return file_passarim_catalog_v1_catalog_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *KidsFact) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+func (x *KidsFact) GetSourceFact() int32 {
+	if x != nil {
+		return x.SourceFact
+	}
+	return 0
+}
+
+// Conteúdo para crianças de 8 a 12 anos, gerado a partir do texto adulto e
+// revisado por uma pessoa. É uma mensagem própria, sem nenhuma URL, para
+// nenhum link externo chegar às telas Kids.
+type KidsContent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Description   string                 `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"` // de 2 a 4 frases curtas
+	Facts         []*KidsFact            `protobuf:"bytes,2,rep,name=facts,proto3" json:"facts,omitempty"`
+	DidYouKnow    string                 `protobuf:"bytes,3,opt,name=did_you_know,json=didYouKnow,proto3" json:"did_you_know,omitempty"` // o balão "Você sabia?"
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *KidsContent) Reset() {
+	*x = KidsContent{}
+	mi := &file_passarim_catalog_v1_catalog_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KidsContent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KidsContent) ProtoMessage() {}
+
+func (x *KidsContent) ProtoReflect() protoreflect.Message {
+	mi := &file_passarim_catalog_v1_catalog_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KidsContent.ProtoReflect.Descriptor instead.
+func (*KidsContent) Descriptor() ([]byte, []int) {
+	return file_passarim_catalog_v1_catalog_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *KidsContent) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *KidsContent) GetFacts() []*KidsFact {
+	if x != nil {
+		return x.Facts
+	}
+	return nil
+}
+
+func (x *KidsContent) GetDidYouKnow() string {
+	if x != nil {
+		return x.DidYouKnow
+	}
+	return ""
+}
+
+type GetFeaturedSpeciesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// O dia no formato AAAA-MM-DD, no fuso de São Paulo. Quem calcula é o BFF;
+	// o catalog aceita só ontem, hoje e amanhã.
+	Date          string `protobuf:"bytes,1,opt,name=date,proto3" json:"date,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFeaturedSpeciesRequest) Reset() {
+	*x = GetFeaturedSpeciesRequest{}
+	mi := &file_passarim_catalog_v1_catalog_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFeaturedSpeciesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFeaturedSpeciesRequest) ProtoMessage() {}
+
+func (x *GetFeaturedSpeciesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_passarim_catalog_v1_catalog_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFeaturedSpeciesRequest.ProtoReflect.Descriptor instead.
+func (*GetFeaturedSpeciesRequest) Descriptor() ([]byte, []int) {
+	return file_passarim_catalog_v1_catalog_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *GetFeaturedSpeciesRequest) GetDate() string {
+	if x != nil {
+		return x.Date
+	}
+	return ""
+}
+
+type GetFeaturedSpeciesResponse struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Species *SpeciesSummary        `protobuf:"bytes,1,opt,name=species,proto3" json:"species,omitempty"`
+	// O canto da ave (o card adulto tem botão de canto). Ausente se a ave
+	// perdeu o canto depois de ser escolhida.
+	Audio         *Audio `protobuf:"bytes,2,opt,name=audio,proto3" json:"audio,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFeaturedSpeciesResponse) Reset() {
+	*x = GetFeaturedSpeciesResponse{}
+	mi := &file_passarim_catalog_v1_catalog_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFeaturedSpeciesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFeaturedSpeciesResponse) ProtoMessage() {}
+
+func (x *GetFeaturedSpeciesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_passarim_catalog_v1_catalog_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFeaturedSpeciesResponse.ProtoReflect.Descriptor instead.
+func (*GetFeaturedSpeciesResponse) Descriptor() ([]byte, []int) {
+	return file_passarim_catalog_v1_catalog_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *GetFeaturedSpeciesResponse) GetSpecies() *SpeciesSummary {
+	if x != nil {
+		return x.Species
+	}
+	return nil
+}
+
+func (x *GetFeaturedSpeciesResponse) GetAudio() *Audio {
+	if x != nil {
+		return x.Audio
+	}
+	return nil
+}
+
 var File_passarim_catalog_v1_catalog_proto protoreflect.FileDescriptor
 
 const file_passarim_catalog_v1_catalog_proto_rawDesc = "" +
@@ -1174,12 +1466,13 @@ const file_passarim_catalog_v1_catalog_proto_rawDesc = "" +
 	"\tlarge_key\x18\x03 \x01(\tR\blargeKey\x12\x14\n" +
 	"\x05width\x18\x04 \x01(\x05R\x05width\x12\x16\n" +
 	"\x06height\x18\x05 \x01(\x05R\x06height\x123\n" +
-	"\x06credit\x18\x06 \x01(\v2\x1b.passarim.catalog.v1.CreditR\x06credit\"o\n" +
+	"\x06credit\x18\x06 \x01(\v2\x1b.passarim.catalog.v1.CreditR\x06credit\"\x85\x01\n" +
 	"\x05Audio\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x1f\n" +
 	"\vduration_ms\x18\x02 \x01(\x05R\n" +
 	"durationMs\x123\n" +
-	"\x06credit\x18\x03 \x01(\v2\x1b.passarim.catalog.v1.CreditR\x06credit\"2\n" +
+	"\x06credit\x18\x03 \x01(\v2\x1b.passarim.catalog.v1.CreditR\x06credit\x12\x14\n" +
+	"\x05peaks\x18\x04 \x03(\x02R\x05peaks\"2\n" +
 	"\x04Fact\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\"k\n" +
@@ -1187,13 +1480,14 @@ const file_passarim_catalog_v1_catalog_proto_rawDesc = "" +
 	"\x03lat\x18\x01 \x01(\x01R\x03lat\x12\x10\n" +
 	"\x03lng\x18\x02 \x01(\x01R\x03lng\x12\x14\n" +
 	"\x05count\x18\x03 \x01(\x05R\x05count\x12\x1c\n" +
-	"\tprecision\x18\x04 \x01(\x01R\tprecision\"\xee\x01\n" +
+	"\tprecision\x18\x04 \x01(\x01R\tprecision\"\xaf\x02\n" +
 	"\x0eSpeciesSummary\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12'\n" +
 	"\x0fscientific_name\x18\x02 \x01(\tR\x0escientificName\x12$\n" +
 	"\x0ecommon_name_pt\x18\x03 \x01(\tR\fcommonNamePt\x12#\n" +
 	"\rthumbnail_key\x18\x04 \x01(\tR\fthumbnailKey\x12X\n" +
-	"\x13conservation_status\x18\x05 \x01(\x0e2'.passarim.catalog.v1.ConservationStatusR\x12conservationStatus\"\xbb\x05\n" +
+	"\x13conservation_status\x18\x05 \x01(\x0e2'.passarim.catalog.v1.ConservationStatusR\x12conservationStatus\x12?\n" +
+	"\rprimary_biome\x18\x06 \x01(\x0e2\x1a.passarim.catalog.v1.BiomeR\fprimaryBiome\"\xb2\x06\n" +
 	"\aSpecies\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12'\n" +
 	"\x0fscientific_name\x18\x02 \x01(\tR\x0escientificName\x12$\n" +
@@ -1210,25 +1504,30 @@ const file_passarim_catalog_v1_catalog_proto_rawDesc = "" +
 	"\x06states\x18\f \x03(\tR\x06states\x122\n" +
 	"\x06photos\x18\r \x03(\v2\x1a.passarim.catalog.v1.PhotoR\x06photos\x120\n" +
 	"\x05audio\x18\x0e \x01(\v2\x1a.passarim.catalog.v1.AudioR\x05audio\x12B\n" +
-	"\bclusters\x18\x0f \x03(\v2&.passarim.catalog.v1.OccurrenceClusterR\bclustersB\n" +
+	"\bclusters\x18\x0f \x03(\v2&.passarim.catalog.v1.OccurrenceClusterR\bclusters\x124\n" +
+	"\x04kids\x18\x10 \x01(\v2 .passarim.catalog.v1.KidsContentR\x04kids\x12?\n" +
+	"\rprimary_biome\x18\x11 \x01(\x0e2\x1a.passarim.catalog.v1.BiomeR\fprimaryBiomeB\n" +
 	"\n" +
 	"\b_size_cmB\a\n" +
-	"\x05_diet\"\xae\x01\n" +
+	"\x05_diet\"\x8c\x02\n" +
 	"\x12ListSpeciesRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x120\n" +
 	"\x05biome\x18\x02 \x01(\x0e2\x1a.passarim.catalog.v1.BiomeR\x05biome\x12\x14\n" +
 	"\x05state\x18\x03 \x01(\tR\x05state\x12\x1b\n" +
 	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x05 \x01(\tR\tpageToken\"|\n" +
+	"page_token\x18\x05 \x01(\tR\tpageToken\x12\x1b\n" +
+	"\tkids_only\x18\x06 \x01(\bR\bkidsOnly\x12?\n" +
+	"\rprimary_biome\x18\a \x01(\x0e2\x1a.passarim.catalog.v1.BiomeR\fprimaryBiome\"|\n" +
 	"\x13ListSpeciesResponse\x12=\n" +
 	"\aspecies\x18\x01 \x03(\v2#.passarim.catalog.v1.SpeciesSummaryR\aspecies\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"#\n" +
 	"\x11GetSpeciesRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"L\n" +
 	"\x12GetSpeciesResponse\x126\n" +
-	"\aspecies\x18\x01 \x01(\v2\x1c.passarim.catalog.v1.SpeciesR\aspecies\"\x14\n" +
-	"\x12ListFiltersRequest\"c\n" +
+	"\aspecies\x18\x01 \x01(\v2\x1c.passarim.catalog.v1.SpeciesR\aspecies\"1\n" +
+	"\x12ListFiltersRequest\x12\x1b\n" +
+	"\tkids_only\x18\x01 \x01(\bR\bkidsOnly\"c\n" +
 	"\n" +
 	"BiomeCount\x120\n" +
 	"\x05biome\x18\x01 \x01(\x0e2\x1a.passarim.catalog.v1.BiomeR\x05biome\x12#\n" +
@@ -1236,10 +1535,25 @@ const file_passarim_catalog_v1_catalog_proto_rawDesc = "" +
 	"\n" +
 	"StateCount\x12\x14\n" +
 	"\x05state\x18\x01 \x01(\tR\x05state\x12#\n" +
-	"\rspecies_count\x18\x02 \x01(\x05R\fspeciesCount\"\x87\x01\n" +
+	"\rspecies_count\x18\x02 \x01(\x05R\fspeciesCount\"\xda\x01\n" +
 	"\x13ListFiltersResponse\x127\n" +
 	"\x06biomes\x18\x01 \x03(\v2\x1f.passarim.catalog.v1.BiomeCountR\x06biomes\x127\n" +
-	"\x06states\x18\x02 \x03(\v2\x1f.passarim.catalog.v1.StateCountR\x06states*\x98\x01\n" +
+	"\x06states\x18\x02 \x03(\v2\x1f.passarim.catalog.v1.StateCountR\x06states\x12Q\n" +
+	"\x14primary_biome_counts\x18\x03 \x03(\v2\x1f.passarim.catalog.v1.BiomeCountR\x12primaryBiomeCounts\"?\n" +
+	"\bKidsFact\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\x12\x1f\n" +
+	"\vsource_fact\x18\x02 \x01(\x05R\n" +
+	"sourceFact\"\x86\x01\n" +
+	"\vKidsContent\x12 \n" +
+	"\vdescription\x18\x01 \x01(\tR\vdescription\x123\n" +
+	"\x05facts\x18\x02 \x03(\v2\x1d.passarim.catalog.v1.KidsFactR\x05facts\x12 \n" +
+	"\fdid_you_know\x18\x03 \x01(\tR\n" +
+	"didYouKnow\"/\n" +
+	"\x19GetFeaturedSpeciesRequest\x12\x12\n" +
+	"\x04date\x18\x01 \x01(\tR\x04date\"\x8d\x01\n" +
+	"\x1aGetFeaturedSpeciesResponse\x12=\n" +
+	"\aspecies\x18\x01 \x01(\v2#.passarim.catalog.v1.SpeciesSummaryR\aspecies\x120\n" +
+	"\x05audio\x18\x02 \x01(\v2\x1a.passarim.catalog.v1.AudioR\x05audio*\x98\x01\n" +
 	"\x05Biome\x12\x15\n" +
 	"\x11BIOME_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eBIOME_AMAZONIA\x10\x01\x12\x18\n" +
@@ -1257,12 +1571,13 @@ const file_passarim_catalog_v1_catalog_proto_rawDesc = "" +
 	"\x16CONSERVATION_STATUS_CR\x10\x05\x12\x1a\n" +
 	"\x16CONSERVATION_STATUS_EW\x10\x06\x12\x1a\n" +
 	"\x16CONSERVATION_STATUS_EX\x10\a\x12\x1a\n" +
-	"\x16CONSERVATION_STATUS_DD\x10\b2\xb3\x02\n" +
+	"\x16CONSERVATION_STATUS_DD\x10\b2\xaa\x03\n" +
 	"\x0eCatalogService\x12`\n" +
 	"\vListSpecies\x12'.passarim.catalog.v1.ListSpeciesRequest\x1a(.passarim.catalog.v1.ListSpeciesResponse\x12]\n" +
 	"\n" +
 	"GetSpecies\x12&.passarim.catalog.v1.GetSpeciesRequest\x1a'.passarim.catalog.v1.GetSpeciesResponse\x12`\n" +
-	"\vListFilters\x12'.passarim.catalog.v1.ListFiltersRequest\x1a(.passarim.catalog.v1.ListFiltersResponseB\xde\x01\n" +
+	"\vListFilters\x12'.passarim.catalog.v1.ListFiltersRequest\x1a(.passarim.catalog.v1.ListFiltersResponse\x12u\n" +
+	"\x12GetFeaturedSpecies\x12..passarim.catalog.v1.GetFeaturedSpeciesRequest\x1a/.passarim.catalog.v1.GetFeaturedSpeciesResponseB\xde\x01\n" +
 	"\x17com.passarim.catalog.v1B\fCatalogProtoP\x01ZGgithub.com/velosobr/passarim-proto/gen/go/passarim/catalog/v1;catalogv1\xa2\x02\x03PCX\xaa\x02\x13Passarim.Catalog.V1\xca\x02\x13Passarim\\Catalog\\V1\xe2\x02\x1fPassarim\\Catalog\\V1\\GPBMetadata\xea\x02\x15Passarim::Catalog::V1b\x06proto3"
 
 var (
@@ -1278,54 +1593,68 @@ func file_passarim_catalog_v1_catalog_proto_rawDescGZIP() []byte {
 }
 
 var file_passarim_catalog_v1_catalog_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_passarim_catalog_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_passarim_catalog_v1_catalog_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_passarim_catalog_v1_catalog_proto_goTypes = []any{
-	(Biome)(0),                  // 0: passarim.catalog.v1.Biome
-	(ConservationStatus)(0),     // 1: passarim.catalog.v1.ConservationStatus
-	(*Credit)(nil),              // 2: passarim.catalog.v1.Credit
-	(*Photo)(nil),               // 3: passarim.catalog.v1.Photo
-	(*Audio)(nil),               // 4: passarim.catalog.v1.Audio
-	(*Fact)(nil),                // 5: passarim.catalog.v1.Fact
-	(*OccurrenceCluster)(nil),   // 6: passarim.catalog.v1.OccurrenceCluster
-	(*SpeciesSummary)(nil),      // 7: passarim.catalog.v1.SpeciesSummary
-	(*Species)(nil),             // 8: passarim.catalog.v1.Species
-	(*ListSpeciesRequest)(nil),  // 9: passarim.catalog.v1.ListSpeciesRequest
-	(*ListSpeciesResponse)(nil), // 10: passarim.catalog.v1.ListSpeciesResponse
-	(*GetSpeciesRequest)(nil),   // 11: passarim.catalog.v1.GetSpeciesRequest
-	(*GetSpeciesResponse)(nil),  // 12: passarim.catalog.v1.GetSpeciesResponse
-	(*ListFiltersRequest)(nil),  // 13: passarim.catalog.v1.ListFiltersRequest
-	(*BiomeCount)(nil),          // 14: passarim.catalog.v1.BiomeCount
-	(*StateCount)(nil),          // 15: passarim.catalog.v1.StateCount
-	(*ListFiltersResponse)(nil), // 16: passarim.catalog.v1.ListFiltersResponse
+	(Biome)(0),                         // 0: passarim.catalog.v1.Biome
+	(ConservationStatus)(0),            // 1: passarim.catalog.v1.ConservationStatus
+	(*Credit)(nil),                     // 2: passarim.catalog.v1.Credit
+	(*Photo)(nil),                      // 3: passarim.catalog.v1.Photo
+	(*Audio)(nil),                      // 4: passarim.catalog.v1.Audio
+	(*Fact)(nil),                       // 5: passarim.catalog.v1.Fact
+	(*OccurrenceCluster)(nil),          // 6: passarim.catalog.v1.OccurrenceCluster
+	(*SpeciesSummary)(nil),             // 7: passarim.catalog.v1.SpeciesSummary
+	(*Species)(nil),                    // 8: passarim.catalog.v1.Species
+	(*ListSpeciesRequest)(nil),         // 9: passarim.catalog.v1.ListSpeciesRequest
+	(*ListSpeciesResponse)(nil),        // 10: passarim.catalog.v1.ListSpeciesResponse
+	(*GetSpeciesRequest)(nil),          // 11: passarim.catalog.v1.GetSpeciesRequest
+	(*GetSpeciesResponse)(nil),         // 12: passarim.catalog.v1.GetSpeciesResponse
+	(*ListFiltersRequest)(nil),         // 13: passarim.catalog.v1.ListFiltersRequest
+	(*BiomeCount)(nil),                 // 14: passarim.catalog.v1.BiomeCount
+	(*StateCount)(nil),                 // 15: passarim.catalog.v1.StateCount
+	(*ListFiltersResponse)(nil),        // 16: passarim.catalog.v1.ListFiltersResponse
+	(*KidsFact)(nil),                   // 17: passarim.catalog.v1.KidsFact
+	(*KidsContent)(nil),                // 18: passarim.catalog.v1.KidsContent
+	(*GetFeaturedSpeciesRequest)(nil),  // 19: passarim.catalog.v1.GetFeaturedSpeciesRequest
+	(*GetFeaturedSpeciesResponse)(nil), // 20: passarim.catalog.v1.GetFeaturedSpeciesResponse
 }
 var file_passarim_catalog_v1_catalog_proto_depIdxs = []int32{
 	2,  // 0: passarim.catalog.v1.Photo.credit:type_name -> passarim.catalog.v1.Credit
 	2,  // 1: passarim.catalog.v1.Audio.credit:type_name -> passarim.catalog.v1.Credit
 	1,  // 2: passarim.catalog.v1.SpeciesSummary.conservation_status:type_name -> passarim.catalog.v1.ConservationStatus
-	1,  // 3: passarim.catalog.v1.Species.conservation_status:type_name -> passarim.catalog.v1.ConservationStatus
-	2,  // 4: passarim.catalog.v1.Species.description_credit:type_name -> passarim.catalog.v1.Credit
-	5,  // 5: passarim.catalog.v1.Species.facts:type_name -> passarim.catalog.v1.Fact
-	0,  // 6: passarim.catalog.v1.Species.biomes:type_name -> passarim.catalog.v1.Biome
-	3,  // 7: passarim.catalog.v1.Species.photos:type_name -> passarim.catalog.v1.Photo
-	4,  // 8: passarim.catalog.v1.Species.audio:type_name -> passarim.catalog.v1.Audio
-	6,  // 9: passarim.catalog.v1.Species.clusters:type_name -> passarim.catalog.v1.OccurrenceCluster
-	0,  // 10: passarim.catalog.v1.ListSpeciesRequest.biome:type_name -> passarim.catalog.v1.Biome
-	7,  // 11: passarim.catalog.v1.ListSpeciesResponse.species:type_name -> passarim.catalog.v1.SpeciesSummary
-	8,  // 12: passarim.catalog.v1.GetSpeciesResponse.species:type_name -> passarim.catalog.v1.Species
-	0,  // 13: passarim.catalog.v1.BiomeCount.biome:type_name -> passarim.catalog.v1.Biome
-	14, // 14: passarim.catalog.v1.ListFiltersResponse.biomes:type_name -> passarim.catalog.v1.BiomeCount
-	15, // 15: passarim.catalog.v1.ListFiltersResponse.states:type_name -> passarim.catalog.v1.StateCount
-	9,  // 16: passarim.catalog.v1.CatalogService.ListSpecies:input_type -> passarim.catalog.v1.ListSpeciesRequest
-	11, // 17: passarim.catalog.v1.CatalogService.GetSpecies:input_type -> passarim.catalog.v1.GetSpeciesRequest
-	13, // 18: passarim.catalog.v1.CatalogService.ListFilters:input_type -> passarim.catalog.v1.ListFiltersRequest
-	10, // 19: passarim.catalog.v1.CatalogService.ListSpecies:output_type -> passarim.catalog.v1.ListSpeciesResponse
-	12, // 20: passarim.catalog.v1.CatalogService.GetSpecies:output_type -> passarim.catalog.v1.GetSpeciesResponse
-	16, // 21: passarim.catalog.v1.CatalogService.ListFilters:output_type -> passarim.catalog.v1.ListFiltersResponse
-	19, // [19:22] is the sub-list for method output_type
-	16, // [16:19] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	0,  // 3: passarim.catalog.v1.SpeciesSummary.primary_biome:type_name -> passarim.catalog.v1.Biome
+	1,  // 4: passarim.catalog.v1.Species.conservation_status:type_name -> passarim.catalog.v1.ConservationStatus
+	2,  // 5: passarim.catalog.v1.Species.description_credit:type_name -> passarim.catalog.v1.Credit
+	5,  // 6: passarim.catalog.v1.Species.facts:type_name -> passarim.catalog.v1.Fact
+	0,  // 7: passarim.catalog.v1.Species.biomes:type_name -> passarim.catalog.v1.Biome
+	3,  // 8: passarim.catalog.v1.Species.photos:type_name -> passarim.catalog.v1.Photo
+	4,  // 9: passarim.catalog.v1.Species.audio:type_name -> passarim.catalog.v1.Audio
+	6,  // 10: passarim.catalog.v1.Species.clusters:type_name -> passarim.catalog.v1.OccurrenceCluster
+	18, // 11: passarim.catalog.v1.Species.kids:type_name -> passarim.catalog.v1.KidsContent
+	0,  // 12: passarim.catalog.v1.Species.primary_biome:type_name -> passarim.catalog.v1.Biome
+	0,  // 13: passarim.catalog.v1.ListSpeciesRequest.biome:type_name -> passarim.catalog.v1.Biome
+	0,  // 14: passarim.catalog.v1.ListSpeciesRequest.primary_biome:type_name -> passarim.catalog.v1.Biome
+	7,  // 15: passarim.catalog.v1.ListSpeciesResponse.species:type_name -> passarim.catalog.v1.SpeciesSummary
+	8,  // 16: passarim.catalog.v1.GetSpeciesResponse.species:type_name -> passarim.catalog.v1.Species
+	0,  // 17: passarim.catalog.v1.BiomeCount.biome:type_name -> passarim.catalog.v1.Biome
+	14, // 18: passarim.catalog.v1.ListFiltersResponse.biomes:type_name -> passarim.catalog.v1.BiomeCount
+	15, // 19: passarim.catalog.v1.ListFiltersResponse.states:type_name -> passarim.catalog.v1.StateCount
+	14, // 20: passarim.catalog.v1.ListFiltersResponse.primary_biome_counts:type_name -> passarim.catalog.v1.BiomeCount
+	17, // 21: passarim.catalog.v1.KidsContent.facts:type_name -> passarim.catalog.v1.KidsFact
+	7,  // 22: passarim.catalog.v1.GetFeaturedSpeciesResponse.species:type_name -> passarim.catalog.v1.SpeciesSummary
+	4,  // 23: passarim.catalog.v1.GetFeaturedSpeciesResponse.audio:type_name -> passarim.catalog.v1.Audio
+	9,  // 24: passarim.catalog.v1.CatalogService.ListSpecies:input_type -> passarim.catalog.v1.ListSpeciesRequest
+	11, // 25: passarim.catalog.v1.CatalogService.GetSpecies:input_type -> passarim.catalog.v1.GetSpeciesRequest
+	13, // 26: passarim.catalog.v1.CatalogService.ListFilters:input_type -> passarim.catalog.v1.ListFiltersRequest
+	19, // 27: passarim.catalog.v1.CatalogService.GetFeaturedSpecies:input_type -> passarim.catalog.v1.GetFeaturedSpeciesRequest
+	10, // 28: passarim.catalog.v1.CatalogService.ListSpecies:output_type -> passarim.catalog.v1.ListSpeciesResponse
+	12, // 29: passarim.catalog.v1.CatalogService.GetSpecies:output_type -> passarim.catalog.v1.GetSpeciesResponse
+	16, // 30: passarim.catalog.v1.CatalogService.ListFilters:output_type -> passarim.catalog.v1.ListFiltersResponse
+	20, // 31: passarim.catalog.v1.CatalogService.GetFeaturedSpecies:output_type -> passarim.catalog.v1.GetFeaturedSpeciesResponse
+	28, // [28:32] is the sub-list for method output_type
+	24, // [24:28] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_passarim_catalog_v1_catalog_proto_init() }
@@ -1340,7 +1669,7 @@ func file_passarim_catalog_v1_catalog_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_passarim_catalog_v1_catalog_proto_rawDesc), len(file_passarim_catalog_v1_catalog_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   15,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

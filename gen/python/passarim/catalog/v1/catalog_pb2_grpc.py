@@ -10,8 +10,10 @@ class CatalogServiceStub:
 
     Erros (códigos gRPC) que todos os métodos podem devolver:
     - INVALID_ARGUMENT: parâmetro inválido (bioma/UF desconhecido, page_token
-    corrompido, query com mais de 100 caracteres, page_size negativo).
-    - NOT_FOUND: (só GetSpecies) não existe espécie com esse id.
+    corrompido, query com mais de 100 caracteres, page_size negativo, data
+    da "Ave do dia" fora do formato AAAA-MM-DD ou longe de hoje).
+    - NOT_FOUND: em GetSpecies, não existe espécie com esse id; em
+    GetFeaturedSpecies, nenhuma ave pode ser a "Ave do dia".
     - DEADLINE_EXCEEDED / CANCELLED: o contexto da chamada expirou (ex.:
     timeout de 2s do BFF) ou foi cancelado pelo cliente; não é uma falha
     do catalog.
@@ -39,6 +41,11 @@ class CatalogServiceStub:
                 request_serializer=passarim_dot_catalog_dot_v1_dot_catalog__pb2.ListFiltersRequest.SerializeToString,
                 response_deserializer=passarim_dot_catalog_dot_v1_dot_catalog__pb2.ListFiltersResponse.FromString,
                 _registered_method=True)
+        self.GetFeaturedSpecies = channel.unary_unary(
+                '/passarim.catalog.v1.CatalogService/GetFeaturedSpecies',
+                request_serializer=passarim_dot_catalog_dot_v1_dot_catalog__pb2.GetFeaturedSpeciesRequest.SerializeToString,
+                response_deserializer=passarim_dot_catalog_dot_v1_dot_catalog__pb2.GetFeaturedSpeciesResponse.FromString,
+                _registered_method=True)
 
 
 class CatalogServiceServicer:
@@ -46,8 +53,10 @@ class CatalogServiceServicer:
 
     Erros (códigos gRPC) que todos os métodos podem devolver:
     - INVALID_ARGUMENT: parâmetro inválido (bioma/UF desconhecido, page_token
-    corrompido, query com mais de 100 caracteres, page_size negativo).
-    - NOT_FOUND: (só GetSpecies) não existe espécie com esse id.
+    corrompido, query com mais de 100 caracteres, page_size negativo, data
+    da "Ave do dia" fora do formato AAAA-MM-DD ou longe de hoje).
+    - NOT_FOUND: em GetSpecies, não existe espécie com esse id; em
+    GetFeaturedSpecies, nenhuma ave pode ser a "Ave do dia".
     - DEADLINE_EXCEEDED / CANCELLED: o contexto da chamada expirou (ex.:
     timeout de 2s do BFF) ou foi cancelado pelo cliente; não é uma falha
     do catalog.
@@ -75,6 +84,15 @@ class CatalogServiceServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetFeaturedSpecies(self, request, context):
+        """A "Ave do dia": a mesma nas duas jornadas (adulto e Kids) e durante o dia
+        inteiro no fuso de São Paulo. O catalog escolhe em rodízio: nenhuma ave
+        se repete antes de todas as elegíveis aparecerem uma vez.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_CatalogServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -93,6 +111,11 @@ def add_CatalogServiceServicer_to_server(servicer, server):
                     request_deserializer=passarim_dot_catalog_dot_v1_dot_catalog__pb2.ListFiltersRequest.FromString,
                     response_serializer=passarim_dot_catalog_dot_v1_dot_catalog__pb2.ListFiltersResponse.SerializeToString,
             ),
+            'GetFeaturedSpecies': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetFeaturedSpecies,
+                    request_deserializer=passarim_dot_catalog_dot_v1_dot_catalog__pb2.GetFeaturedSpeciesRequest.FromString,
+                    response_serializer=passarim_dot_catalog_dot_v1_dot_catalog__pb2.GetFeaturedSpeciesResponse.SerializeToString,
+            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
             'passarim.catalog.v1.CatalogService', rpc_method_handlers)
@@ -106,8 +129,10 @@ class CatalogService:
 
     Erros (códigos gRPC) que todos os métodos podem devolver:
     - INVALID_ARGUMENT: parâmetro inválido (bioma/UF desconhecido, page_token
-    corrompido, query com mais de 100 caracteres, page_size negativo).
-    - NOT_FOUND: (só GetSpecies) não existe espécie com esse id.
+    corrompido, query com mais de 100 caracteres, page_size negativo, data
+    da "Ave do dia" fora do formato AAAA-MM-DD ou longe de hoje).
+    - NOT_FOUND: em GetSpecies, não existe espécie com esse id; em
+    GetFeaturedSpecies, nenhuma ave pode ser a "Ave do dia".
     - DEADLINE_EXCEEDED / CANCELLED: o contexto da chamada expirou (ex.:
     timeout de 2s do BFF) ou foi cancelado pelo cliente; não é uma falha
     do catalog.
@@ -185,6 +210,33 @@ class CatalogService:
             '/passarim.catalog.v1.CatalogService/ListFilters',
             passarim_dot_catalog_dot_v1_dot_catalog__pb2.ListFiltersRequest.SerializeToString,
             passarim_dot_catalog_dot_v1_dot_catalog__pb2.ListFiltersResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetFeaturedSpecies(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/passarim.catalog.v1.CatalogService/GetFeaturedSpecies',
+            passarim_dot_catalog_dot_v1_dot_catalog__pb2.GetFeaturedSpeciesRequest.SerializeToString,
+            passarim_dot_catalog_dot_v1_dot_catalog__pb2.GetFeaturedSpeciesResponse.FromString,
             options,
             channel_credentials,
             insecure,
