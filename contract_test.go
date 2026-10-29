@@ -95,13 +95,14 @@ func TestUnknownEnumValueSurvivesRoundTrip(t *testing.T) {
 	}
 }
 
-// O serviço precisa expor exatamente os três métodos que o BFF usa.
+// O serviço precisa expor exatamente os quatro métodos que o BFF usa (o
+// GetFeaturedSpecies, a "Ave do dia", veio na frente B).
 func TestCatalogServiceMethods(t *testing.T) {
 	sd := catalogv1.File_passarim_catalog_v1_catalog_proto.Services().ByName("CatalogService")
 	if sd == nil {
 		t.Fatal("CatalogService não encontrado no descriptor")
 	}
-	want := []string{"ListSpecies", "GetSpecies", "ListFilters"}
+	want := []string{"ListSpecies", "GetSpecies", "ListFilters", "GetFeaturedSpecies"}
 	if sd.Methods().Len() != len(want) {
 		t.Fatalf("esperava %d métodos, veio %d", len(want), sd.Methods().Len())
 	}
@@ -175,5 +176,43 @@ func TestPhotoCategoryNumbersAreStable(t *testing.T) {
 	}
 	if n := len(curatorv1.PhotoCategory_name); n != len(want) {
 		t.Errorf("o enum tem %d valores, o teste conhece %d: atualize o teste e o worker", n, len(want))
+	}
+}
+
+// Os campos da frente B (conteúdo Kids, bioma principal, picos do canto e a
+// "Ave do dia") também sobrevivem à ida e volta pelo formato binário.
+func TestKidsAndFeaturedRoundTrip(t *testing.T) {
+	species := &catalogv1.Species{
+		Id:           "turdus-rufiventris",
+		PrimaryBiome: catalogv1.Biome_BIOME_MATA_ATLANTICA,
+		Kids: &catalogv1.KidsContent{
+			Description: "O sabiá tem a barriga cor de laranja.",
+			Facts:       []*catalogv1.KidsFact{{Text: "O canto dele pode durar dois minutos.", SourceFact: 1}},
+			DidYouKnow:  "O sabiá imita outras aves.",
+		},
+		Audio: &catalogv1.Audio{Key: "species/t/a.aac", DurationMs: 3000, Peaks: []float32{0, 0.5, 1}},
+	}
+	featured := &catalogv1.GetFeaturedSpeciesResponse{
+		Species: &catalogv1.SpeciesSummary{Id: "turdus-rufiventris", PrimaryBiome: catalogv1.Biome_BIOME_MATA_ATLANTICA},
+		Audio:   &catalogv1.Audio{Key: "species/t/a.aac", Peaks: []float32{1}},
+	}
+	requests := []proto.Message{
+		&catalogv1.ListSpeciesRequest{KidsOnly: true, PrimaryBiome: catalogv1.Biome_BIOME_PAMPA},
+		&catalogv1.ListFiltersRequest{KidsOnly: true},
+		&catalogv1.ListFiltersResponse{PrimaryBiomeCounts: []*catalogv1.BiomeCount{{Biome: catalogv1.Biome_BIOME_PAMPA, SpeciesCount: 2}}},
+		&catalogv1.GetFeaturedSpeciesRequest{Date: "2026-10-28"},
+	}
+	for _, original := range append([]proto.Message{species, featured}, requests...) {
+		bytes, err := proto.Marshal(original)
+		if err != nil {
+			t.Fatalf("marshal: %v", err)
+		}
+		decoded := original.ProtoReflect().New().Interface()
+		if err := proto.Unmarshal(bytes, decoded); err != nil {
+			t.Fatalf("unmarshal: %v", err)
+		}
+		if !proto.Equal(original, decoded) {
+			t.Fatalf("mensagem mudou na ida e volta:\nantes:  %v\ndepois: %v", original, decoded)
+		}
 	}
 }

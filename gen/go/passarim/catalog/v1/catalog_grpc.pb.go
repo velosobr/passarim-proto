@@ -34,9 +34,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CatalogService_ListSpecies_FullMethodName = "/passarim.catalog.v1.CatalogService/ListSpecies"
-	CatalogService_GetSpecies_FullMethodName  = "/passarim.catalog.v1.CatalogService/GetSpecies"
-	CatalogService_ListFilters_FullMethodName = "/passarim.catalog.v1.CatalogService/ListFilters"
+	CatalogService_ListSpecies_FullMethodName        = "/passarim.catalog.v1.CatalogService/ListSpecies"
+	CatalogService_GetSpecies_FullMethodName         = "/passarim.catalog.v1.CatalogService/GetSpecies"
+	CatalogService_ListFilters_FullMethodName        = "/passarim.catalog.v1.CatalogService/ListFilters"
+	CatalogService_GetFeaturedSpecies_FullMethodName = "/passarim.catalog.v1.CatalogService/GetFeaturedSpecies"
 )
 
 // CatalogServiceClient is the client API for CatalogService service.
@@ -47,8 +48,10 @@ const (
 //
 // Erros (códigos gRPC) que todos os métodos podem devolver:
 //   - INVALID_ARGUMENT: parâmetro inválido (bioma/UF desconhecido, page_token
-//     corrompido, query com mais de 100 caracteres, page_size negativo).
-//   - NOT_FOUND: (só GetSpecies) não existe espécie com esse id.
+//     corrompido, query com mais de 100 caracteres, page_size negativo, data
+//     da "Ave do dia" fora do formato AAAA-MM-DD ou longe de hoje).
+//   - NOT_FOUND: em GetSpecies, não existe espécie com esse id; em
+//     GetFeaturedSpecies, nenhuma ave pode ser a "Ave do dia".
 //   - DEADLINE_EXCEEDED / CANCELLED: o contexto da chamada expirou (ex.:
 //     timeout de 2s do BFF) ou foi cancelado pelo cliente; não é uma falha
 //     do catalog.
@@ -60,6 +63,10 @@ type CatalogServiceClient interface {
 	GetSpecies(ctx context.Context, in *GetSpeciesRequest, opts ...grpc.CallOption) (*GetSpeciesResponse, error)
 	// Biomas e estados que têm ao menos uma espécie, com a contagem.
 	ListFilters(ctx context.Context, in *ListFiltersRequest, opts ...grpc.CallOption) (*ListFiltersResponse, error)
+	// A "Ave do dia": a mesma nas duas jornadas (adulto e Kids) e durante o dia
+	// inteiro no fuso de São Paulo. O catalog escolhe em rodízio: nenhuma ave
+	// se repete antes de todas as elegíveis aparecerem uma vez.
+	GetFeaturedSpecies(ctx context.Context, in *GetFeaturedSpeciesRequest, opts ...grpc.CallOption) (*GetFeaturedSpeciesResponse, error)
 }
 
 type catalogServiceClient struct {
@@ -100,6 +107,16 @@ func (c *catalogServiceClient) ListFilters(ctx context.Context, in *ListFiltersR
 	return out, nil
 }
 
+func (c *catalogServiceClient) GetFeaturedSpecies(ctx context.Context, in *GetFeaturedSpeciesRequest, opts ...grpc.CallOption) (*GetFeaturedSpeciesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFeaturedSpeciesResponse)
+	err := c.cc.Invoke(ctx, CatalogService_GetFeaturedSpecies_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CatalogServiceServer is the server API for CatalogService service.
 // All implementations must embed UnimplementedCatalogServiceServer
 // for forward compatibility.
@@ -108,8 +125,10 @@ func (c *catalogServiceClient) ListFilters(ctx context.Context, in *ListFiltersR
 //
 // Erros (códigos gRPC) que todos os métodos podem devolver:
 //   - INVALID_ARGUMENT: parâmetro inválido (bioma/UF desconhecido, page_token
-//     corrompido, query com mais de 100 caracteres, page_size negativo).
-//   - NOT_FOUND: (só GetSpecies) não existe espécie com esse id.
+//     corrompido, query com mais de 100 caracteres, page_size negativo, data
+//     da "Ave do dia" fora do formato AAAA-MM-DD ou longe de hoje).
+//   - NOT_FOUND: em GetSpecies, não existe espécie com esse id; em
+//     GetFeaturedSpecies, nenhuma ave pode ser a "Ave do dia".
 //   - DEADLINE_EXCEEDED / CANCELLED: o contexto da chamada expirou (ex.:
 //     timeout de 2s do BFF) ou foi cancelado pelo cliente; não é uma falha
 //     do catalog.
@@ -121,6 +140,10 @@ type CatalogServiceServer interface {
 	GetSpecies(context.Context, *GetSpeciesRequest) (*GetSpeciesResponse, error)
 	// Biomas e estados que têm ao menos uma espécie, com a contagem.
 	ListFilters(context.Context, *ListFiltersRequest) (*ListFiltersResponse, error)
+	// A "Ave do dia": a mesma nas duas jornadas (adulto e Kids) e durante o dia
+	// inteiro no fuso de São Paulo. O catalog escolhe em rodízio: nenhuma ave
+	// se repete antes de todas as elegíveis aparecerem uma vez.
+	GetFeaturedSpecies(context.Context, *GetFeaturedSpeciesRequest) (*GetFeaturedSpeciesResponse, error)
 	mustEmbedUnimplementedCatalogServiceServer()
 }
 
@@ -139,6 +162,9 @@ func (UnimplementedCatalogServiceServer) GetSpecies(context.Context, *GetSpecies
 }
 func (UnimplementedCatalogServiceServer) ListFilters(context.Context, *ListFiltersRequest) (*ListFiltersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListFilters not implemented")
+}
+func (UnimplementedCatalogServiceServer) GetFeaturedSpecies(context.Context, *GetFeaturedSpeciesRequest) (*GetFeaturedSpeciesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetFeaturedSpecies not implemented")
 }
 func (UnimplementedCatalogServiceServer) mustEmbedUnimplementedCatalogServiceServer() {}
 func (UnimplementedCatalogServiceServer) testEmbeddedByValue()                        {}
@@ -215,6 +241,24 @@ func _CatalogService_ListFilters_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CatalogService_GetFeaturedSpecies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFeaturedSpeciesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CatalogServiceServer).GetFeaturedSpecies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CatalogService_GetFeaturedSpecies_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CatalogServiceServer).GetFeaturedSpecies(ctx, req.(*GetFeaturedSpeciesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CatalogService_ServiceDesc is the grpc.ServiceDesc for CatalogService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -233,6 +277,10 @@ var CatalogService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListFilters",
 			Handler:    _CatalogService_ListFilters_Handler,
+		},
+		{
+			MethodName: "GetFeaturedSpecies",
+			Handler:    _CatalogService_GetFeaturedSpecies_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
